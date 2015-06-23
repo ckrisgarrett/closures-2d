@@ -2,15 +2,15 @@
 CC_SERIAL  = g++ -Wall -Wno-unknown-pragmas -O3
 CC_DEBUG   = g++ -Wall -Wno-unknown-pragmas -g
 CC_PROFILE = g++ -Wall -Wno-unknown-pragmas -pg -O3
-#CC_CUDA    = g++ -Wall -Wno-unknown-pragmas -O3 -DUSE_CUDA_FLUX -DUSE_CUDA_FOBJ
+CC_CUDA    = g++ -Wall -Wno-unknown-pragmas -O3 -DUSE_CUDA_FLUX -DUSE_CUDA_FOBJ
 CC_OMP     = g++ -Wall -Wno-unknown-pragmas -O3 -fopenmp -DUSE_OPENMP
 CC_MPI     = mpic++ -Wall -Wno-unknown-pragmas -O3 -DUSE_MPI
 CC_MPIOMP  = mpic++ -Wall -Wno-unknown-pragmas -O3 -fopenmp -DUSE_OPENMP -DUSE_MPI
-CC_CUDA    = /opt/cuda/bin/nvcc -O3 -arch=sm_30 -DUSE_CUDA_FLUX -DUSE_CUDA_FOBJ
 CC_MPICUDA = mpic++ -Wall -Wno-unknown-pragmas -O3 -DUSE_MPI -DUSE_CUDA_FLUX -DUSE_CUDA_FOBJ
 #CC_OMPCUDA = g++ -Wall -O3 -fopenmp -DUSE_OPENMP -DUSE_CUDA_FLUX -DUSE_CUDA_FOBJ
 CC_OMPCUDA = g++ -Wall -Wno-unknown-pragmas -O3 -fopenmp -DUSE_OPENMP -DUSE_CUDA_FLUX -DUSE_CUDA_FOBJ
 CC_MPIOMPCUDA = mpic++ -Wall -Wno-unknown-pragmas -O3 -fopenmp -DUSE_MPI -DUSE_CUDA_FLUX -DUSE_CUDA_FOBJ
+CC_NVCC    = /opt/cuda/bin/nvcc -O3 -arch=sm_30 -DUSE_CUDA_FLUX -DUSE_CUDA_FOBJ
 
 # Source files
 MOMENT_SRC_FILES = src/moment/moment_boundaries.cpp src/moment/moment_init.cpp \
@@ -81,26 +81,26 @@ mpiomp:
 
 .PHONY: cuda
 cuda: 
-	$(CC_CUDA) -c $(SRC_FILE_FOBJ_CUDA) -o $(OBJ_FILE_FOBJ_CUDA) $(INCLUDE)
-	$(CC_CUDA) -c $(SRC_FILE_FLUX_CUDA) -o $(OBJ_FILE_FLUX_CUDA) $(INCLUDE)
+	$(CC_NVCC) -c $(SRC_FILE_FOBJ_CUDA) -o $(OBJ_FILE_FOBJ_CUDA) $(INCLUDE)
+	$(CC_NVCC) -c $(SRC_FILE_FLUX_CUDA) -o $(OBJ_FILE_FLUX_CUDA) $(INCLUDE)
 	$(CC_CUDA) -o solver_cuda.x $(SRC_FILES) $(OBJ_FILES_CUDA) $(CPU_LIB) $(CUDA_LIB)
 
 .PHONY: mpicuda
 mpicuda: 
-	$(CC_CUDA) -c $(SRC_FILE_FOBJ_CUDA) -o $(OBJ_FILE_FOBJ_CUDA) $(INCLUDE)
-	$(CC_CUDA) -c $(SRC_FILE_FLUX_CUDA) -o $(OBJ_FILE_FLUX_CUDA) $(INCLUDE)
+	$(CC_NVCC) -c $(SRC_FILE_FOBJ_CUDA) -o $(OBJ_FILE_FOBJ_CUDA) $(INCLUDE)
+	$(CC_NVCC) -c $(SRC_FILE_FLUX_CUDA) -o $(OBJ_FILE_FLUX_CUDA) $(INCLUDE)
 	$(CC_MPICUDA) -o solver_mpicuda.x $(SRC_FILES) $(OBJ_FILES_CUDA) $(CPU_LIB) $(CUDA_LIB)
 
 .PHONY: ompcuda
 ompcuda: 
-	$(CC_CUDA) -c $(SRC_FILE_FOBJ_CUDA) -o $(OBJ_FILE_FOBJ_CUDA) $(INCLUDE)
-	$(CC_CUDA) -c $(SRC_FILE_FLUX_CUDA) -o $(OBJ_FILE_FLUX_CUDA) $(INCLUDE)
+	$(CC_NVCC) -c $(SRC_FILE_FOBJ_CUDA) -o $(OBJ_FILE_FOBJ_CUDA) $(INCLUDE)
+	$(CC_NVCC) -c $(SRC_FILE_FLUX_CUDA) -o $(OBJ_FILE_FLUX_CUDA) $(INCLUDE)
 	$(CC_OMPCUDA) -o solver_ompcuda.x $(SRC_FILES) $(OBJ_FILES_CUDA) $(CPU_LIB) $(CUDA_LIB)
 
 .PHONY: mpiompcuda
 mpiompcuda: 
-	$(CC_CUDA) -c $(SRC_FILE_FOBJ_CUDA) -o $(OBJ_FILE_FOBJ_CUDA) $(INCLUDE)
-	$(CC_CUDA) -c $(SRC_FILE_FLUX_CUDA) -o $(OBJ_FILE_FLUX_CUDA) $(INCLUDE)
+	$(CC_NVCC) -c $(SRC_FILE_FOBJ_CUDA) -o $(OBJ_FILE_FOBJ_CUDA) $(INCLUDE)
+	$(CC_NVCC) -c $(SRC_FILE_FLUX_CUDA) -o $(OBJ_FILE_FLUX_CUDA) $(INCLUDE)
 	$(CC_OMPCUDA) -o solver_mpiompcuda.x $(SRC_FILES) $(OBJ_FILES_CUDA) $(CPU_LIB) $(CUDA_LIB)
 
 .PHONY: clean
