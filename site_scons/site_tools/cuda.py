@@ -140,7 +140,7 @@ def generate(env):
 
     # add required libraries
     env.Append(CPPPATH=[cudaSDKPath + '/common/inc', cudaToolkitPath + '/include'])
-    env.Append(LIBPATH=[cudaSDKPath + '/lib', cudaSDKPath + '/common/lib' + cudaSDKSubLibDir, cudaToolkitPath + '/lib'])
+    env.Append(LIBPATH=[cudaSDKPath + '/lib64', cudaSDKPath + '/common/lib64' + cudaSDKSubLibDir, cudaToolkitPath + '/lib64'])
     env.Append(LIBS=['cudart'])
 
 def exists(env):
