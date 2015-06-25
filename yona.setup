@@ -1,8 +1,0 @@
-#!/bin/bash
-
-export OMP_NUM_THREADS=12
-module load cuda
-module load acml
-module load matlab
-module swap PE-pgi PE-intel
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/sw/redhat6/acml/5.3.0/ifort64/lib

@@ -1,9 +1,0 @@
-#!/bin/bash
-
-module swap PrgEnv-pgi PrgEnv-gnu
-export OMP_NUM_THREADS=16
-module load cudatoolkit
-module load gsl
-module load subversion
-module load python_matplotlib
-

@@ -1,73 +1,6 @@
-### additional search paths for nonstandard installations, etc. ###
-library_paths = []
-include_paths = []
-
-### names of required libraries ###
-# DO NOT prefix with "l"
-cpu_libs = ["gsl", "gslcblas", "blas", "lapack", "rt"]
-cuda_libs = ["cudart"]
-
-# compilation options
-AddOption("--omp", action="store_true")
-AddOption("--mpi", action="store_true")
-AddOption("--cuda", action="store_true")
-AddOption("--all", action="store_true")
-
-### Compiler definitions ###
-# base compilers
-cxx = Environment(CXX="g++", CCFLAGS=["-Wall", "-Wno-unknown-pragmas", "-O3"],
-    LIBS=cpu_libs, LIBPATH=library_paths, CPPPATH=include_paths)
-
-if GetOption("mpi") or GetOption("all"):
-    mpic = cxx.Clone(CXX="mpic++")
-
-if GetOption("cuda") or GetOption("all"):
-    cudac = Environment()
-    cudac['CUDA_TOOLKIT_PATH'] = "/opt/cuda"
-    cudac['CUDA_SDK_PATH'] = "/opt/cuda"
-    cudac['NVCCFLAGS'] = "-O3 -arch=sm_30"
-    cudac.Tool("cuda")
-    cudac.AppendUnique(LIBS=cuda_libs)
-
-# now customize for various build configurations
-
-serial = cxx.Clone()
-
-debug = cxx.Clone(CCFLAGS=["-g", "-Wall"])
-
-profile = cxx.Clone()
-profile.AppendUnique(CCFLAGS=["-pg"])
-
-if GetOption("omp") or GetOption("all"):
-    omp = cxx.Clone()
-    omp.AppendUnique(CCFLAGS=["-fopenmp"], LINKFLAGS=["-fopenmp"])
-
-if GetOption("mpi") or GetOption("all"):
-    mpi = mpic.Clone()
-
-if GetOption("cuda") or GetOption("all"):
-    cuda = cxx.Clone()
-    cuda.AppendUnique(LIBS=cuda_libs)
-
-if (GetOption("mpi") and GetOption("omp")) or GetOption("all"):
-    mpiomp = mpic.Clone()
-    mpiomp.AppendUnique(CCFLAGS=["-fopenmp"], LINKFLAGS=["-fopenmp"])
-
-if (GetOption("mpi") and GetOption("cuda")) or GetOption("all"):
-    mpicuda = mpic.Clone()
-    mpicuda.AppendUnique(LIBS=cuda_libs)
-
-if (GetOption("omp") and GetOption("cuda")) or GetOption("all"):
-    ompcuda = omp.Clone()
-    ompcuda.AppendUnique(LIBS=cuda_libs)
-
-if (GetOption("mpi") and GetOption("omp") and GetOption("cuda")) or GetOption("all"):
-    mpiompcuda = mpicuda.Clone()
-    mpiompcuda.AppendUnique(CCFLAGS=["-fopenmp"], LINKFLAGS=["-fopenmp"])
-
-###### end of user-configurable build commands ######
-
 import os
+import config
+
 
 src_files = ["main.cpp",
              "utils.cpp",
@@ -95,7 +28,66 @@ src_files = ["main.cpp",
              "dn/dn_output.cpp",
              "dn/dn_update.cpp"]
 
-# build targets
+
+AddOption("--omp", action="store_true")
+AddOption("--mpi", action="store_true")
+AddOption("--cuda", action="store_true")
+AddOption("--all", action="store_true")
+
+
+cxx = Environment(CXX=config.cxx_compiler, CCFLAGS=config.cxx_flags,
+    LIBS=config.cpu_libs, LIBPATH=config.library_paths, CPPPATH=config.include_paths)
+
+if GetOption("mpi") or GetOption("all"):
+    mpic = cxx.Clone(CXX=config.mpi_compiler)
+
+if GetOption("cuda") or GetOption("all"):
+    cudac = Environment()
+    cudac['CUDA_TOOLKIT_PATH'] = config.cuda_toolkit_path
+    cudac['CUDA_SDK_PATH'] = config.cuda_sdk_path
+    cudac['NVCCFLAGS'] = config.nvcc_flags
+    cudac.Tool("cuda")
+    cudac.AppendUnique(LIBS=config.cuda_libs)
+
+
+serial = cxx.Clone()
+
+debug = cxx.Clone(CCFLAGS=config.cxx_debug_flags)
+
+profile = cxx.Clone()
+profile.AppendUnique(CCFLAGS=config.cxx_profile_flags)
+
+if GetOption("omp") or GetOption("all"):
+    omp = cxx.Clone()
+    omp.AppendUnique(CCFLAGS=config.omp_compiler_flags,
+        LINKFLAGS=config.omp_linker_flags)
+
+if GetOption("mpi") or GetOption("all"):
+    mpi = mpic.Clone()
+
+if GetOption("cuda") or GetOption("all"):
+    cuda = cxx.Clone()
+    cuda.AppendUnique(LIBS=config.cuda_libs)
+
+if (GetOption("mpi") and GetOption("omp")) or GetOption("all"):
+    mpiomp = mpic.Clone()
+    mpiomp.AppendUnique(CCFLAGS=config.omp_compiler_flags,
+        LINKFLAGS=config.omp_linker_flags)
+
+if (GetOption("mpi") and GetOption("cuda")) or GetOption("all"):
+    mpicuda = mpic.Clone()
+    mpicuda.AppendUnique(LIBS=config.cuda_libs)
+
+if (GetOption("omp") and GetOption("cuda")) or GetOption("all"):
+    ompcuda = omp.Clone()
+    ompcuda.AppendUnique(LIBS=config.cuda_libs)
+
+if (GetOption("mpi") and GetOption("omp") and GetOption("cuda")) or GetOption("all"):
+    mpiompcuda = mpicuda.Clone()
+    mpiompcuda.AppendUnique(CCFLAGS=config.omp_compiler_flags,
+        LINKFLAGS=config.omp_linker_flags)
+
+
 serial.VariantDir("build/serial", "src")
 Default(serial.Program("solver_serial",
     [os.path.join("build/serial", x) for x in src_files]))
