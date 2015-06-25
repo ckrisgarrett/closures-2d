@@ -4,7 +4,7 @@ include_paths = []
 
 ### names of required libraries ###
 # DO NOT prefix with "l"
-cpu_libs = ["gsl", "blas", "cblas", "lapack", "rt"]
+cpu_libs = ["gsl", "gslcblas", "blas", "lapack", "rt"]
 cuda_libs = ["cudart"]
 
 # compilation options
