@@ -1,6 +1,9 @@
 import os
 import config
+import testing
 
+
+binaries = []
 
 src_files = ["main.cpp",
              "utils.cpp",
@@ -89,8 +92,10 @@ if (GetOption("mpi") and GetOption("omp") and GetOption("cuda")) or GetOption("a
 
 
 serial.VariantDir("build/serial", "src")
-Default(serial.Program("solver_serial",
+binaries.append(serial.Program("solver_serial",
     [os.path.join("build/serial", x) for x in src_files]))
+convergence_binary = binaries[-1]
+Default(binaries[-1])
 
 profile.VariantDir("build/profile", "src")
 profile.Program("solver_profile",
@@ -103,14 +108,17 @@ debug.Program("solver_debug",
 if GetOption("omp") or GetOption("all"):
     omp.VariantDir("build/omp", "src")
     omp.AppendUnique(CPPDEFINES=["USE_OPENMP"])
-    Default(omp.Program("solver_omp",
+    binaries.append(omp.Program("solver_omp",
         [os.path.join("build/omp", x) for x in src_files]))
+    convergence_binary = binaries[-1]
+    Default(binaries[-1])
 
 if GetOption("mpi") or GetOption("all"):
     mpi.VariantDir("build/mpi", "src")
     mpi.AppendUnique(CPPDEFINES=["USE_MPI"])
-    Default(mpi.Program("solver_mpi",
+    binaries.append(mpi.Program("solver_mpi",
         [os.path.join("build/mpi", x) for x in src_files]))
+    Default(binaries[-1])
 
 if GetOption("cuda") or GetOption("all"):
     cudac.VariantDir("build/cudac", "src")
@@ -120,29 +128,43 @@ if GetOption("cuda") or GetOption("all"):
 
     cuda.VariantDir("build/cuda", "src")
     cuda.AppendUnique(CPPDEFINES=["USE_CUDA_FLUX", "USE_CUDA_FOBJ"])
-    Default(cuda.Program("solver_cuda",
+    binaries.append(cuda.Program("solver_cuda",
         [os.path.join("build/cuda", x) for x in src_files] + fobj_cuda + flux_cuda))
+    Default(binaries[-1])
 
 if (GetOption("mpi") and GetOption("omp")) or GetOption("all"):
     mpiomp.VariantDir("build/mpiomp", "src")
     mpiomp.AppendUnique(CPPDEFINES=["USE_OPENMP", "USE_MPI"])
-    mpiomp.Program("solver_mpiomp",
-        [os.path.join("build/mpiomp", x) for x in src_files])
+    binaries.append(mpiomp.Program("solver_mpiomp",
+        [os.path.join("build/mpiomp", x) for x in src_files]))
 
 if (GetOption("omp") and GetOption("cuda")) or GetOption("all"):
     ompcuda.VariantDir("build/ompcuda", "src")
     ompcuda.AppendUnique(CPPDEFINES=["USE_OPENMP", "USE_CUDA_FLUX", "USE_CUDA_FOBJ"])
-    ompcuda.Program("solver_ompcuda",
-        [os.path.join("build/ompcuda", x) for x in src_files] + fobj_cuda + flux_cuda)
+    binaries.append(ompcuda.Program("solver_ompcuda",
+        [os.path.join("build/ompcuda", x) for x in src_files] + fobj_cuda + flux_cuda))
 
 if (GetOption("mpi") and GetOption("cuda")) or GetOption("all"):
     mpicuda.VariantDir("build/mpicuda", "src")
     mpicuda.AppendUnique(CPPDEFINES=["USE_MPI", "USE_CUDA_FLUX", "USE_CUDA_FOBJ"])
-    mpicuda.Program("solver_mpicuda",
-        [os.path.join("build/mpicuda", x) for x in src_files] + fobj_cuda + flux_cuda)
+    binaries.append(mpicuda.Program("solver_mpicuda",
+        [os.path.join("build/mpicuda", x) for x in src_files] + fobj_cuda + flux_cuda))
 
 if (GetOption("mpi") and GetOption("omp") and GetOption("cuda")) or GetOption("all"):
     mpiompcuda.VariantDir("build/mpiompcuda", "src")
     mpiompcuda.AppendUnique(CPPDEFINES=["USE_MPI", "USE_OMP", "USE_CUDA_FLUX", "USE_CUDA_FOBJ"])
-    mpiompcuda.Program("solver_mpiompcuda",
-        [os.path.join("build/mpiompcuda", x) for x in src_files] + fobj_cuda + flux_cuda)
+    binaries.append(mpiompcuda.Program("solver_mpiompcuda",
+        [os.path.join("build/mpiompcuda", x) for x in src_files] + fobj_cuda + flux_cuda))
+
+
+tests = Environment()
+tests.Append(BUILDERS={"Regression": Builder(action=testing.regression_test)})
+tests.Append(BUILDERS={"Convergence": Builder(action=testing.convergence_test)})
+tests.Append(BUILDERS={"Everything": Builder(action=testing.test_everything)})
+tests.Alias("regression_tests", "regression.txt")
+tests.Alias("convergence_tests", "convergence.txt")
+tests.Alias("tests", "tests.txt")
+
+tests.Regression("regression.txt", binaries)
+tests.Convergence("convergence.txt", convergence_binary)
+tests.Everything("tests.txt", ["regression.txt", "convergence.txt"])

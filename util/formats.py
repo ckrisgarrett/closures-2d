@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import numpy
 import copy
 import struct

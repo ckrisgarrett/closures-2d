@@ -1,30 +1,49 @@
-#!/usr/bin/env python
-
 import os
 import sys
 import time
 import tempfile
 
-def nameprint(s):
-    sys.stdout.write("%-53s" % s)
-    sys.stdout.flush()
+from . import formats
+from . import decks
 
-def resultprint(s):
-    sys.stdout.write("%15s\n" % s)
-    sys.stdout.flush()
 
-def bulletprint(s, indent=1):
-    nameprint(" %s %s" % ("-" * indent, s))
+def tee(filename, s, wait=False):
+    if wait:
+        sys.stdout.write(s)
+        sys.stdout.flush()
+        tail = ""
+    else:
+        print(s)
+        tail = "\n"
+    if filename:
+        with open(filename, "a") as f:
+            f.write(s + tail)
 
+def result(filename, s, wait=False):
+    tee(filename, "%20s" % s, wait)
+
+def lresult(filename, s, wait=False):
+    tee(filename, "%-20s" % s, wait)
+
+def name(filename, s, wait=True):
+    tee(filename, "%-50s" % s, wait)
+
+def bullet(filename, s, indent=1, wait=True):
+    name(filename, " %s %s" % ("-" * indent, s), wait)
+
+def right(filename, s, wait=True):
+    tee(filename, "%50s" % s, wait)
 
 class Timed(object):
+    def __init__(self, filename=None):
+        self.filename = filename
+
     def __enter__(self):
         self.start = time.time()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.end = time.time()
-        sys.stdout.write("%9.4fs" % (self.end - self.start))
-        sys.stdout.flush()
+        tee(self.filename, "%-10s" % ("%.3fs" % (self.end - self.start)), wait=True)
 
         return False
 

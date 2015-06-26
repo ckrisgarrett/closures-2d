@@ -1,5 +1,9 @@
-.sconsign.dblite
+*.sn
+*.pn
+*.deck
+solver_*
 
+.sconsign.dblite
 
 # copied from https://github.com/github/gitignore
 
