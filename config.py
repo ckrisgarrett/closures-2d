@@ -1,5 +1,5 @@
 ###### required libraries ######
-cpu_libs = ["gsl", "gslcblas", "blas", "lapack", "rt"]
+cpu_libs = ["gsl", "gslcblas", "blas", "lapack"]
 cuda_libs = ["cudart"]
 
 ###### additional search paths for CPU libraries ######
