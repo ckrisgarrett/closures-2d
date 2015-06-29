@@ -8,7 +8,6 @@ binaries = []
 src_files = ["main.cpp",
              "utils.cpp",
              "comm.cpp",
-             "timer.cpp",
              "moment/moment_boundaries.cpp",
              "moment/moment_init.cpp",
              "moment/moment_output.cpp",

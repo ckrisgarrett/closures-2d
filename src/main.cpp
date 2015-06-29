@@ -13,7 +13,6 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
-#include "timer.h"
 
 #ifdef USE_MPI
 #include <mpi.h>
@@ -33,11 +32,6 @@ int main(int argc, char **argv)
     #ifdef USE_MPI
     MPI_Init(&argc, &argv);
     #endif
-    
-
-    // Start Timing
-    Timer timer;
-    timer.start();
     
 
     // Get the node index and number of nodes.
@@ -236,12 +230,6 @@ int main(int argc, char **argv)
     #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
     #endif
-    if(node == 0)
-    {
-        timer.stop();
-        printf("Time taken: %.3lfs\n", timer.getTimeElapsed());
-    }
-    
 
     // End MPI.
     #ifdef USE_MPI
