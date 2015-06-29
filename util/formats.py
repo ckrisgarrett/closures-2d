@@ -72,13 +72,15 @@ class Grid(object):
 
     def plot(self):
         plt.figure()
-        plt.imshow(self.grid, origin='lower', extent=[self.ax, self.bx, self.ay, self.by])
+        plt.imshow(self.grid, origin='lower', interpolation='nearest',
+            extent=[self.ax, self.bx, self.ay, self.by])
         plt.colorbar()
         plt.show()
 
     def logplot(self):
         plt.figure()
-        plt.imshow(numpy.log(self.grid), origin='lower', extent=[self.ax, self.bx, self.ay, self.by])
+        plt.imshow(numpy.log(self.grid), origin='lower', interpolation='nearest',
+            extent=[self.ax, self.bx, self.ay, self.by])
         plt.colorbar()
         plt.show()
 
