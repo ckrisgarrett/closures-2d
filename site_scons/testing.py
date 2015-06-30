@@ -56,7 +56,8 @@ def convergence_test(target, source, env):
         raise
 
 def test_everything(target, source, env):
-    pass # just a placeholder so SCons runs the actual tests
+    with open(str(target[0]), "w") as f:
+        f.write("tests complete\n")
 
 
 class Test(object):

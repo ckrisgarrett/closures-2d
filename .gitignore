@@ -3,6 +3,10 @@
 *.deck
 solver_*
 
+regression.txt
+convergence.txt
+tests.txt
+
 .sconsign.dblite
 
 # copied from https://github.com/github/gitignore
