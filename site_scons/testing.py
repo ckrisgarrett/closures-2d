@@ -7,6 +7,10 @@ import subprocess
 import util
 
 REGENERATE = False
+# To regenerate regression test answers (due to changes in the code), delete
+# everything under tests/regression, flip this flag, and run regression tests
+# in serial mode. The script will write out new answers.
+# Remember to flip the flag back!
 
 INITCOND = ["delta", "gaussian", "lattice", "smooth"]
 SOLVER = ["kinetic", "moment"]
@@ -22,13 +26,11 @@ def regression_test(target, source, env):
             for s in SOLVER:
                 for i in INITCOND:
                     if s == "kinetic":
-                        util.bullet(str(target[0]), "%s,%s,%s" % (p, s, i))
-                        util.tee(str(target[0]), " " * 14, wait=True)
+                        util.bullet(str(target[0]), "%s,%s,%s" % (p, s, i), wait=False)
                         KineticRegressionTest(str(target[0]), i).run([os.path.realpath(p)])
                     elif s == "moment":
                         for f in MOMENT_FILTER:
-                            util.bullet(str(target[0]), "%s,%s,%s(%s)" % (p, s, i, f))
-                            util.tee(str(target[0]), " " * 14, wait=True)
+                            util.bullet(str(target[0]), "%s,%s,%s(%s)" % (p, s, i, f), wait=False)
                             MomentRegressionTest(str(target[0]), f, i).run([os.path.realpath(p)])
     except:
         try:
@@ -116,7 +118,9 @@ class RegressionTest(Test):
             t_final=1.03, sigma=1.111, init_cond = self.initcond,
             gaussian_sigma=self.gaussian_sigma)
         with util.ResetFile(self.current_path, self.initial_path):
+            util.right(self.log_path, "execution time:")
             super(RegressionTest, self).run(commands)
+            util.tee(self.log_path, "")
             self.initial = self.parser(self.initial_path)
             self.current = self.parser(self.current_path)
             if REGENERATE:
@@ -126,16 +130,19 @@ class RegressionTest(Test):
                     pass
                 shutil.copyfile(self.current_path, self.reference_path)
             self.reference = self.parser(self.reference_path)
+
+        self.show_results()
+
         return self.current
 
     def show_results(self):
-        util.right(self.log_path, "relative error: ")
+        util.right(self.log_path, "relative error:")
         if self.relative_error == 0.0:
             util.result(self.log_path, "OK")
         else:
             util.result(self.log_path, "%0e" % self.relative_error)
 
-        util.right(self.log_path, "relative mass change: ")
+        util.right(self.log_path, "relative mass change:")
         if self.relative_mass_change == 0.0:
             util.result(self.log_path, "OK")
         else:
@@ -156,12 +163,7 @@ class KineticRegressionTest(RegressionTest):
 
     def run(self, commands):
         self.setup_files["kinetic.deck"] = util.decks.kinetic_deck()
-        super(KineticRegressionTest, self).run(commands)
-
-        util.tee(self.log_path, "")
-        self.show_results()
-
-        return self.current
+        return super(KineticRegressionTest, self).run(commands)
 
 class MomentRegressionTest(RegressionTest):
     def __init__(self,log_path,  filter_type, initcond):
@@ -179,12 +181,7 @@ class MomentRegressionTest(RegressionTest):
 
     def run(self, commands):
         self.setup_files["moment.deck"] = util.decks.moment_deck()
-        super(MomentRegressionTest, self).run(commands)
-
-        util.tee(self.log_path, "")
-        self.show_results()
-
-        return self.current
+        return super(MomentRegressionTest, self).run(commands)
 
 
 class ConvergenceTest(Test):
