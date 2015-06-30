@@ -175,7 +175,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        solver->c_initX = bx - dx * solver->c_sizeX * (solver->c_numNodesX - solver->c_nodeX) + dx;
+        solver->c_initX = bx - dx * solver->c_sizeX * (solver->c_numNodesX - solver->c_nodeX);
     }
     solver->c_sizeY = solver->c_sizeY / numNodesY;
     if(solver->c_nodeY < numCellsY % numNodesY)
@@ -185,7 +185,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        solver->c_initY = by - dy * solver->c_sizeY * (solver->c_numNodesY - solver->c_nodeY) + dy;
+        solver->c_initY = by - dy * solver->c_sizeY * (solver->c_numNodesY - solver->c_nodeY);
     }
     #endif
     
