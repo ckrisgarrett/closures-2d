@@ -43,7 +43,7 @@ class Timed(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.end = time.time()
-        tee(self.filename, "%-10s" % ("[%.3fs]" % (self.end - self.start)), wait=True)
+        tee(self.filename, "%10s" % ("%.3fs" % (self.end - self.start)), wait=True)
 
         return False
 

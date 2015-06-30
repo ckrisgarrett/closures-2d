@@ -84,6 +84,14 @@ class Grid(object):
         plt.colorbar()
         plt.show()
 
+    @property
+    def mass(self):
+        accumulator = 0.0
+        for x in range(self.sizeX):
+            for y in range(self.sizeY):
+                accumulator += self[x, y] * self.dx * self.dy
+        return accumulator
+
 
 class Kinetic(Grid):
     def __init__(self, filename):
@@ -106,6 +114,8 @@ class Kinetic(Grid):
                 for y in range(self.sizeY):
                     self.grid[x, y] = numpy.dot(self.quadWeights, self.matrix[x, y])
             self.grid /= (4.0 * math.pi)
+            self.dx = (self.bx - self.ax) / self.sizeX
+            self.dy = (self.by - self.ay) / self.sizeY
 
 
 class Moment(Grid):
@@ -127,3 +137,5 @@ class Moment(Grid):
                 for y in range(self.sizeY):
                     self.grid[x, y] = self.matrix[x, y, 0]
             self.grid /= (2.0 * math.sqrt(math.pi))
+            self.dx = (self.bx - self.ax) / self.sizeX
+            self.dy = (self.by - self.ay) / self.sizeY

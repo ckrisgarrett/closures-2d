@@ -106,9 +106,9 @@ class RegressionTest(Test):
 
 
     @property
-    def relative_mass_change(self):
+    def mass_change(self):
         if not self._mass_change:
-            self._mass_change = abs(self.current - self.initial) / abs(self.initial)
+            self._mass_change = self.current.mass - self.initial.mass
         return self._mass_change
 
 
@@ -119,6 +119,7 @@ class RegressionTest(Test):
             gaussian_sigma=self.gaussian_sigma)
         with util.ResetFile(self.current_path, self.initial_path):
             util.right(self.log_path, "execution time:")
+            util.tee(self.log_path, " " * 10, wait=True)
             super(RegressionTest, self).run(commands)
             util.tee(self.log_path, "")
             self.initial = self.parser(self.initial_path)
@@ -142,11 +143,15 @@ class RegressionTest(Test):
         else:
             util.result(self.log_path, "%0e" % self.relative_error)
 
-        util.right(self.log_path, "relative mass change:")
-        if self.relative_mass_change == 0.0:
-            util.result(self.log_path, "OK")
+        util.right(self.log_path, "mass change:")
+        if self.initcond == "delta" or self.initcond == "smooth":
+            if abs(self.mass_change) < 1e-10:
+                util.result(self.log_path, "OK")
+            else:
+                util.result(self.log_path, "%0e" % self.mass_change)
         else:
-            util.result(self.log_path, "%0e" % self.relative_mass_change)
+            util.result(self.log_path, "--")
+
 
 class KineticRegressionTest(RegressionTest):
     def __init__(self, log_path, initcond):
