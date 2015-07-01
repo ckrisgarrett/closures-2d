@@ -6,6 +6,8 @@ import subprocess
 
 import util
 
+TOLERANCE = 1e-10
+
 REGENERATE = False
 # To regenerate regression test answers (due to changes in the code), delete
 # everything under tests/regression, flip this flag, and run regression tests
@@ -23,15 +25,27 @@ def regression_test(target, source, env):
     try:
         util.tee(str(target[0]), "regression tests:")
         for p in [str(x) for x in source]:
+            if p.startswith("solver_mpi"):
+                commands = [["mpirun", "-np", "4", p]]
+                composite = True
+            else:
+                commands = [os.path.realpath(p)]
+                composite = False
             for s in SOLVER:
                 for i in INITCOND:
                     if s == "kinetic":
                         util.bullet(str(target[0]), "%s,%s,%s" % (p, s, i), wait=False)
-                        KineticRegressionTest(str(target[0]), i).run([os.path.realpath(p)])
+                        if composite:
+                            KineticCompositeRegressionTest(str(target[0]), i).run(commands)
+                        else:
+                            KineticRegressionTest(str(target[0]), i).run(commands)
                     elif s == "moment":
                         for f in MOMENT_FILTER:
                             util.bullet(str(target[0]), "%s,%s,%s(%s)" % (p, s, i, f), wait=False)
-                            MomentRegressionTest(str(target[0]), f, i).run([os.path.realpath(p)])
+                            if composite:
+                                MomentCompositeRegressionTest(str(target[0]), f, i).run(commands)
+                            else:
+                                MomentRegressionTest(str(target[0]), f, i).run(commands)
     except:
         try:
             os.unlink(str(target[0]))
@@ -114,7 +128,7 @@ class RegressionTest(Test):
 
     def run(self, commands):
         self.setup_files["input.deck"] = util.decks.input_deck(solver=self.solver,
-            num_cells_x=36, num_cells_y=71, a_x=-1.55, b_x=1.45, a_y=-1.62, b_y=1.38,
+            num_cells_x=36, num_cells_y=74, a_x=-1.55, b_x=1.45, a_y=-1.62, b_y=1.38,
             t_final=1.03, sigma=1.111, init_cond = self.initcond,
             gaussian_sigma=self.gaussian_sigma)
         with util.ResetFile(self.current_path, self.initial_path):
@@ -138,20 +152,62 @@ class RegressionTest(Test):
 
     def show_results(self):
         util.right(self.log_path, "relative error:")
-        if self.relative_error == 0.0:
+        if abs(self.relative_error) < TOLERANCE:
             util.result(self.log_path, "OK")
         else:
             util.result(self.log_path, "%0e" % self.relative_error)
 
         util.right(self.log_path, "mass change:")
         if self.initcond == "delta" or self.initcond == "smooth":
-            if abs(self.mass_change) < 1e-10:
+            if abs(self.mass_change) < TOLERANCE:
                 util.result(self.log_path, "OK")
             else:
                 util.result(self.log_path, "%0e" % self.mass_change)
         else:
             util.result(self.log_path, "--")
 
+class CompositeRegressionTest(RegressionTest):
+    def __init__(self, xNodes, yNodes):
+        RegressionTest.__init__(self)
+        self.xNodes = xNodes
+        self.yNodes = yNodes
+
+    @property
+    def initial_path(self):
+        return "out_0.000_{}.%s" % self.ext
+
+    @property
+    def current_path(self):
+        return "out_1.030_{}.%s" % self.ext
+
+    @property
+    def initial_paths(self):
+        return [self.initial_path.format(x) for x in range(self.xNodes * self.yNodes)]
+
+    @property
+    def current_paths(self):
+        return [self.current_path.format(x) for x in range(self.xNodes * self.yNodes)]
+
+    def run(self, commands):
+        self.setup_files["input.deck"] = util.decks.input_deck(solver=self.solver,
+            num_cells_x=36, num_cells_y=74, a_x=-1.55, b_x=1.45, a_y=-1.62, b_y=1.38,
+            t_final=1.03, sigma=1.111, init_cond = self.initcond,
+            gaussian_sigma=self.gaussian_sigma, num_mpi_partitions_x=self.xNodes,
+            num_mpi_partitions_y=self.yNodes)
+        with util.ResetFile(*(self.initial_paths + self.current_paths)):
+            util.right(self.log_path, "execution time:")
+            util.tee(self.log_path, " " * 10, wait=True)
+            super(RegressionTest, self).run(commands)
+            util.tee(self.log_path, "")
+            self.initial = util.formats.Composite(self.parser,
+                self.initial_path, self.xNodes, self.yNodes)
+            self.current = util.formats.Composite(self.parser,
+                self.current_path, self.xNodes, self.yNodes)
+            self.reference = self.parser(self.reference_path)
+
+        self.show_results()
+
+        return self.current
 
 class KineticRegressionTest(RegressionTest):
     def __init__(self, log_path, initcond):
@@ -169,6 +225,15 @@ class KineticRegressionTest(RegressionTest):
     def run(self, commands):
         self.setup_files["kinetic.deck"] = util.decks.kinetic_deck()
         return super(KineticRegressionTest, self).run(commands)
+
+class KineticCompositeRegressionTest(CompositeRegressionTest, KineticRegressionTest):
+    def __init__(self, log_path, initcond):
+        CompositeRegressionTest.__init__(self, 2, 2)
+        KineticRegressionTest.__init__(self, log_path, initcond)
+
+    def run(self, commands):
+        self.setup_files["kinetic.deck"] = util.decks.kinetic_deck()
+        return super(KineticCompositeRegressionTest, self).run(commands)
 
 class MomentRegressionTest(RegressionTest):
     def __init__(self,log_path,  filter_type, initcond):
@@ -188,6 +253,14 @@ class MomentRegressionTest(RegressionTest):
         self.setup_files["moment.deck"] = util.decks.moment_deck()
         return super(MomentRegressionTest, self).run(commands)
 
+class MomentCompositeRegressionTest(CompositeRegressionTest, MomentRegressionTest):
+    def __init__(self, log_path, filter_type, initcond):
+        CompositeRegressionTest.__init__(self, 2, 2)
+        MomentRegressionTest.__init__(self, log_path, filter_type, initcond)
+
+    def run(self, commands):
+        self.setup_files["moment.deck"] = util.decks.moment_deck()
+        return super(MomentCompositeRegressionTest, self).run(commands)
 
 class ConvergenceTest(Test):
     def __init__(self):

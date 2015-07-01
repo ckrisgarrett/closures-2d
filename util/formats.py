@@ -72,14 +72,14 @@ class Grid(object):
 
     def plot(self):
         plt.figure()
-        plt.imshow(self.grid, origin='lower', interpolation='nearest',
+        plt.imshow(self.grid, origin="lower", interpolation="nearest",
             extent=[self.ax, self.bx, self.ay, self.by])
         plt.colorbar()
         plt.show()
 
     def logplot(self):
         plt.figure()
-        plt.imshow(numpy.log(self.grid), origin='lower', interpolation='nearest',
+        plt.imshow(numpy.log(self.grid), origin="lower", interpolation="nearest",
             extent=[self.ax, self.bx, self.ay, self.by])
         plt.colorbar()
         plt.show()
@@ -92,10 +92,31 @@ class Grid(object):
                 accumulator += self[x, y] * self.dx * self.dy
         return accumulator
 
+class Composite(Grid):
+    def __init__(self, parser, filename_pattern, numNodesX, numNodesY):
+        self.subgrids = {}
+        for x in range(numNodesX):
+            for y in range(numNodesY):
+                self.subgrids[x,y] = parser(filename_pattern.format(x * numNodesY + y))
+        self.sizeX = sum([self.subgrids[i,0].sizeX for i in range(numNodesX)])
+        self.sizeY = sum([self.subgrids[0,i].sizeY for i in range(numNodesY)])
+        self.ax = self.subgrids[0,0].ax
+        self.ay = self.subgrids[0,0].ay
+        self.bx = self.subgrids[0,0].bx
+        self.by = self.subgrids[0,0].by
+        self.dx = (self.bx - self.ax) / self.sizeX
+        self.dy = (self.by - self.ay) / self.sizeY
+        self.grid = numpy.zeros([self.sizeX, self.sizeY])
+        for x in range(numNodesX):
+            for y in range(numNodesY):
+                xOffset = sum([self.subgrids[i,0].sizeX for i in range(x)])
+                yOffset = sum([self.subgrids[0,i].sizeY for i in range(y)])
+                self.grid[xOffset:xOffset + self.subgrids[x,y].sizeX,
+                    yOffset:yOffset + self.subgrids[x,y].sizeY] = self.subgrids[x,y].grid
 
 class Kinetic(Grid):
     def __init__(self, filename):
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             header = struct.Struct("=2q4dq")
             data = f.read()
             (self.sizeX,
@@ -117,10 +138,9 @@ class Kinetic(Grid):
             self.dx = (self.bx - self.ax) / self.sizeX
             self.dy = (self.by - self.ay) / self.sizeY
 
-
 class Moment(Grid):
     def __init__(self, filename):
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             header = struct.Struct("=2q4dq")
             data = f.read()
             (self.sizeX,
