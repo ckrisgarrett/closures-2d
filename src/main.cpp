@@ -290,14 +290,14 @@ void Solver::initializeGrid(int numGhostCells, double dx, double dy, double sigm
             else if(c_initCond == INITCOND_LINESOURCE && c_gaussianSigma == 0.0)
             {
                 c_initialGrid[I2D(i,j)] = c_floor;
-                if(c_nodeX == c_numNodesX / 2 && 
-                   c_nodeY == c_numNodesY / 2)
+                if(c_nodeX == (c_numNodesX - 1) / 2 &&
+                   c_nodeY == (c_numNodesY - 1) / 2)
                 {
-                    if((c_numNodesX % 2 != 0 && i == c_sizeX / 2) || 
-                       (c_numNodesX % 2 == 0 && i == c_gX[1]))
+                    if((c_numNodesX % 2 != 0 && i == (c_sizeX + numGhostCells) / 2) ||
+                       (c_numNodesX % 2 == 0 && i == c_gX[2]))
                     {
-                        if((c_numNodesY % 2 != 0 && j == c_sizeY / 2) || 
-                           (c_numNodesY % 2 == 0 && j == c_gY[1]))
+                        if((c_numNodesY % 2 != 0 && j == (c_sizeY + numGhostCells) / 2) ||
+                           (c_numNodesY % 2 == 0 && j == c_gY[2]))
                         {
                             c_initialGrid[I2D(i,j)] = 1.0 / (dx * dy);
                         }
