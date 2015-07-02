@@ -29,15 +29,6 @@
 #endif
 
 /*
-    The filter used for the FPn2 method as described by Radice et. al.
-*/
-static double filterFunction(double x)
-{
-    return 1.0 / (1.0 + x * x * x * x);
-}
-
-
-/*
     This function initializes the data.
     
     node:       MPI node index (0 if not using MPI)
@@ -75,7 +66,6 @@ double MomOptSolver::init(double dx, double dy)
     utils_readLine(file, &c_deltaPPn);
     utils_readLine(file, &c_momentType);
     utils_readLine(file, &c_optType);
-    utils_readLine(file, &c_filterYesNo);
     utils_readLine(file, &c_numCudaCards);
     utils_readLine(file, &c_numThreadsPerCudaCard);
 
@@ -98,7 +88,6 @@ double MomOptSolver::init(double dx, double dy)
         printf("deltaPPn:       %f\n", c_deltaPPn);
         printf("momentType:     %d\n", c_momentType);
         printf("optType:        %d\n", c_optType);
-        printf("filterYesNo:    %d\n", c_filterYesNo);
         printf("numCudaCards:   %d\n", c_numCudaCards);
         printf("threadsPerGPU:  %d\n", c_numThreadsPerCudaCard);
     }
@@ -247,29 +236,6 @@ double MomOptSolver::init(double dx, double dy)
                         c_spHarm[q*c_numManyMoments+k] = shTemp;
                         k++;
                     }
-                }
-            }
-        }
-    }
-    
-    
-    // Create c_momentFilter.
-    c_momentFilter = (double*)malloc(c_numMoments * sizeof(double));
-    if(c_filterYesNo == FILTER_YES)
-    {
-        int nm = 0;
-        for(int n = 0; n <= momentOrder; n++)
-        {
-            for(int m = -n; m <= n; m++)
-            {
-                if((m + n) % 2 == 0)
-                {
-                    double N = momentOrder;
-                    double sigma_e = 20.0;
-                    double s = -sigma_e * maxDt / 
-                        log(filterFunction(N / (N+1)));
-                    c_momentFilter[nm] = pow(filterFunction(n / (N + 1)), s);
-                    nm++;
                 }
             }
         }

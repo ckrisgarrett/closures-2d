@@ -44,18 +44,12 @@ private:
     {
         OPT_TYPE_ORIGINAL, OPT_TYPE_CHANGE_BASIS, OPT_TYPE_BFGS
     };
-    
-    enum
-    {
-        FILTER_NO, FILTER_YES
-    };
 
     
     void initUpdate(int numMoments);
     void solveFlux(double *moments, double *flux, double *alpha, double dx, double dy);
     void solveOptimization();
     double computeAnsatz(double *alpha, int q);
-    void scaleMoments(double *moments);
 
     int c_numMoments;
     int c_numManyMoments;
@@ -63,7 +57,6 @@ private:
 
     int c_optType;
     int c_momentType;
-    int c_filterYesNo;
     double c_deltaPPn;
     double c_condHMax;
     double c_condHMaxBfgs;
@@ -85,7 +78,6 @@ private:
     double *c_flux;
     double *c_alphaP;
     double *c_P2M;
-    double *c_momentFilter;
     
     OPTIMIZATION_STATS c_optStats;
 };

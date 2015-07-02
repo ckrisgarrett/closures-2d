@@ -22,24 +22,6 @@ static double *ansatzGrid;
 
 
 /*
-    Scales moments on the entire grid.
-*/
-void MomOptSolver::scaleMoments(double *moments)
-{
-    for(int i = c_gX[1]; i <= c_gX[2]; i++)
-    {
-        for(int j = c_gY[1]; j <= c_gY[2]; j++)
-        {
-            for(int k = 0; k < c_numMoments; k++)
-            {
-                moments[I3D(i,j,k)] = moments[I3D(i,j,k)] * c_momentFilter[k];
-            }
-        }
-    }
-}
-
-
-/*
     Initialize temporary variables.
 */
 void MomOptSolver::initUpdate(int numMoments)
@@ -316,8 +298,6 @@ void MomOptSolver::update(double dt, double dx, double dy)
     
 
     // Do first Euler step.
-    if(c_filterYesNo == FILTER_YES)
-        scaleMoments(c_moments);
     communicateBoundaries();
     solveOptimization();
     solveFlux(c_moments, c_flux, c_alpha, dx, dy);
@@ -346,8 +326,6 @@ void MomOptSolver::update(double dt, double dx, double dy)
     
     
     // Do second Euler step.
-    if(c_filterYesNo == FILTER_YES)
-        scaleMoments(c_moments);
     communicateBoundaries();
     solveOptimization();
     solveFlux(c_moments, c_flux, c_alpha, dx, dy);
