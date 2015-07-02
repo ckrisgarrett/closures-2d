@@ -29,7 +29,7 @@ def regression_test(target, source, env):
                 commands = [["mpirun", "-np", "4", p]]
                 composite = True
             else:
-                commands = [os.path.realpath(p)]
+                commands = [os.path.abspath(p)]
                 composite = False
             for s in SOLVER:
                 for i in INITCOND:
@@ -65,14 +65,14 @@ def convergence_test(target, source, env):
         for s in SOLVER:
             if s == "kinetic":
                 util.bullet(str(target[0]), "%s" % s, wait=False)
-                KineticConvergenceTest(str(target[0])).run([os.path.realpath(str(source[0]))], 5)
+                KineticConvergenceTest(str(target[0])).run([os.path.abspath(str(source[0]))], 5)
             elif s == "moment":
                 for f in MOMENT_FILTER:
                     util.bullet(str(target[0]), "%s(%s)" % (s, f), wait=False)
-                    MomentConvergenceTest(str(target[0]), f).run([os.path.realpath(str(source[0]))], 5)
+                    MomentConvergenceTest(str(target[0]), f).run([os.path.abspath(str(source[0]))], 5)
             elif s == "momopt":
                 util.bullet(str(target[0]), "%s" % s, wait=False)
-                MomoptConvergenceTest(str(target[0])).run([os.path.realpath(str(source[0]))], 5)
+                MomoptConvergenceTest(str(target[0])).run([os.path.abspath(str(source[0]))], 5)
     except:
         try:
             os.unlink(str(target[0]))
