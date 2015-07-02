@@ -15,7 +15,7 @@ REGENERATE = False
 # Remember to flip the flag back!
 
 INITCOND = ["delta", "gaussian", "lattice", "smooth"]
-SOLVER = ["kinetic", "moment"]
+SOLVER = ["kinetic", "moment", "momopt"]
 MOMENT_FILTER = ["none", "sspline", "hauck", "lanczos"]
 
 DEVNULL = open(os.devnull, "w+b")
@@ -46,6 +46,12 @@ def regression_test(target, source, env):
                                 MomentCompositeRegressionTest(str(target[0]), f, i).run(commands)
                             else:
                                 MomentRegressionTest(str(target[0]), f, i).run(commands)
+                    elif s == "momopt":
+                        util.bullet(str(target[0]), "%s,%s,%s" % (p, s, i), wait=False)
+                        if composite:
+                            MomoptCompositeRegressionTest(str(target[0]), i).run(commands)
+                        else:
+                            MomoptRegressionTest(str(target[0]), i).run(commands)
     except:
         try:
             os.unlink(str(target[0]))
@@ -64,6 +70,9 @@ def convergence_test(target, source, env):
                 for f in MOMENT_FILTER:
                     util.bullet(str(target[0]), "%s(%s)" % (s, f), wait=False)
                     MomentConvergenceTest(str(target[0]), f).run([os.path.realpath(str(source[0]))], 5)
+            elif s == "momopt":
+                util.bullet(str(target[0]), "%s" % s, wait=False)
+                MomoptConvergenceTest(str(target[0])).run([os.path.realpath(str(source[0]))], 5)
     except:
         try:
             os.unlink(str(target[0]))
@@ -79,6 +88,7 @@ def test_everything(target, source, env):
 class Test(object):
     def __init__(self):
         self.setup_files = dict()
+        self.initial_opt = "out_0.000_0.opt"
 
     @property
     def initial_path(self):
@@ -99,6 +109,7 @@ class RegressionTest(Test):
         super(RegressionTest, self).__init__()
         self._relative_error = None
         self._mass_change = None
+        self.current_opt = "out_1.030_0.opt"
 
     @property
     def current_path(self):
@@ -250,7 +261,7 @@ class MomentRegressionTest(RegressionTest):
         return os.path.join("tests", "regression", self.solver, self.initcond, "%s.pn" % self.filter_type)
 
     def run(self, commands):
-        self.setup_files["moment.deck"] = util.decks.moment_deck()
+        self.setup_files["moment.deck"] = util.decks.moment_deck(filter_type=self.filter_type)
         return super(MomentRegressionTest, self).run(commands)
 
 class MomentCompositeRegressionTest(CompositeRegressionTest, MomentRegressionTest):
@@ -259,12 +270,39 @@ class MomentCompositeRegressionTest(CompositeRegressionTest, MomentRegressionTes
         MomentRegressionTest.__init__(self, log_path, filter_type, initcond)
 
     def run(self, commands):
-        self.setup_files["moment.deck"] = util.decks.moment_deck()
+        self.setup_files["moment.deck"] = util.decks.moment_deck(filter_type=self.filter_type)
         return super(MomentCompositeRegressionTest, self).run(commands)
+
+class MomoptRegressionTest(RegressionTest):
+    def __init__(self, log_path, initcond):
+        super(MomoptRegressionTest, self).__init__()
+        self.parser = util.formats.Moment
+        self.ext = "pn"
+        self.solver = "momopt"
+        self.initcond = initcond
+        self.log_path = log_path
+
+    @property
+    def reference_path(self):
+        return os.path.join("tests", "regression", self.solver, "%s.pn" % self.initcond)
+
+    def run(self, commands):
+        self.setup_files["momopt.deck"] = util.decks.momopt_deck()
+        return super(MomoptRegressionTest, self).run(commands)
+
+class MomoptCompositeRegressionTest(CompositeRegressionTest, MomoptRegressionTest):
+    def __init__(self, log_path, initcond):
+        CompositeRegressionTest.__init__(self, 2, 2)
+        MomoptRegressionTest.__init__(self, log_path, initcond)
+
+    def run(self, commands):
+        self.setup_files["momopt.deck"] = util.decks.momopt_deck()
+        return super(MomoptCompositeRegressionTest, self).run(commands)
 
 class ConvergenceTest(Test):
     def __init__(self):
         super(ConvergenceTest, self).__init__()
+        self.current_opt = "out_0.330_0.opt"
 
     @property
     def current_path(self):
@@ -311,5 +349,17 @@ class MomentConvergenceTest(ConvergenceTest):
         self.log_path = log_path
 
     def run(self, commands, iterations):
-        self.setup_files["moment.deck"] = util.decks.moment_deck()
+        self.setup_files["moment.deck"] = util.decks.moment_deck(filter_type=self.filter_type)
         return super(MomentConvergenceTest, self).run(commands, iterations)
+
+class MomoptConvergenceTest(ConvergenceTest):
+    def __init__(self, log_path):
+        super(MomoptConvergenceTest, self).__init__()
+        self.parser = util.formats.Moment
+        self.ext = "pn"
+        self.solver = "momopt"
+        self.log_path = log_path
+
+    def run(self, commands, iterations):
+        self.setup_files["momopt.deck"] = util.decks.momopt_deck()
+        return super(MomoptConvergenceTest, self).run(commands, iterations)

@@ -1,5 +1,6 @@
 *.sn
 *.pn
+*.opt
 *.deck
 solver_*
 

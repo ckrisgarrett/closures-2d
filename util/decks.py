@@ -22,6 +22,42 @@ CFL_FACTOR %f""" % (moment_order,
                     filter_tune,
                     cfl_factor))
 
+def momopt_deck(moment_order=3, quad_order=30, cfl_factor=0.9, tol=1e-4,
+        cond_h_max=1e10, cond_h_max_bfgs=20, max_iter=100, max_bgfs_iter=5,
+        use_cg=1, theta=2.0, delta_ppn=1e-10, moment_type=0, opt_type=0,
+        filterp=0, num_cuda_cards=1, num_threads_pre_cuda_card=2):
+    return ("""MOMENT_ORDER %d
+QUAD_ORDER %d
+CFL_FACTOR %f
+TOL %f
+COND_H_MAX %f
+COND_H_MAX_BFGS %d
+MAX_ITER %d
+MAX_BFGS_ITER %d
+USE_CLEBSCH_GORDAN %d
+THETA %f
+DELTA_PPN %f
+MOMENT_TYPE %d
+OPTIMIZATION_TYPE %d
+FILTER %d
+NUM_CUDA_CARDS %d
+NUM_THREADS_PER_CUDA_CARD %d""" % (moment_order,
+                                   quad_order,
+                                   cfl_factor,
+                                   tol,
+                                   cond_h_max,
+                                   cond_h_max_bfgs,
+                                   max_iter,
+                                   max_bgfs_iter,
+                                   use_cg,
+                                   theta,
+                                   delta_ppn,
+                                   moment_type,
+                                   opt_type,
+                                   filterp,
+                                   num_cuda_cards,
+                                   num_threads_pre_cuda_card))
+
 def input_deck(solver="kinetic",
                num_cells_x=50,
                num_cells_y=50,
