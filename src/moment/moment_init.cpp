@@ -11,7 +11,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../utils.h"
+#include "../input_deck_reader.h"
 
+/*
+    Checks the status of input parameters.
+*/
+static void checkInput(bool isOk, int lineNumber)
+{
+    if(!isOk) {
+        printf("moment_init.cpp:input error at line %d\n", lineNumber);
+        utils_abort();
+    }
+}
 
 /*
     The filter used for the FPn2 method as described by Radice et. al.
@@ -44,34 +55,14 @@ static double filterLanczos(double x)
 */
 double MomentSolver::init(double dx, double dy)
 {
-    // Read moment.deck
-    FILE *file = fopen("moment.deck", "r");
-    if(file == NULL)
-    {
-        printf("Could not open input file: %s\n", "moment.deck");
-        utils_abort();
-    }
-
     int momentOrder, quadOrder;
     double cflFactor;
-    utils_readLine(file, &momentOrder);
-    utils_readLine(file, &quadOrder);
-    utils_readLine(file, &c_filterType);
-    utils_readLine(file, &c_filterTune);
-    utils_readLine(file, &cflFactor);
 
-    fclose(file);
-
-
-    // Print out moment.deck
-    if(c_node == 0)
-    {
-        printf("momentOrder: %d\n", momentOrder);
-        printf("quadOrder:   %d\n", quadOrder);
-        printf("filterType:  %d\n", c_filterType);
-        printf("filterTune:  %f\n", c_filterTune);
-        printf("cflFactor:   %f\n", cflFactor);
-    }
+    checkInput(c_inputDeckReader.getValue("MOMENT_ORDER", &momentOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("QUAD_ORDER", &quadOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("FILTER_TYPE", &c_filterType), __LINE__);
+    checkInput(c_inputDeckReader.getValue("FILTER_TUNE", &c_filterTune), __LINE__);
+    checkInput(c_inputDeckReader.getValue("CFL_FACTOR", &cflFactor), __LINE__);
     
     
     // Maximum value for delta t.
@@ -307,4 +298,3 @@ double MomentSolver::init(double dx, double dy)
 
     return maxDt;
 }
-

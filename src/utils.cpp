@@ -33,65 +33,6 @@ void utils_abort()
 }
 
 
-/*
- Reads a line of a file of the form <Name> <Value>
-*/
-void utils_readLine(FILE *file, double *x)
-{
-    int readReturn;
-    char uselessString[1024];
-
-    readReturn = fscanf(file, "%s", uselessString);
-    if(readReturn < 1)
-    {
-        printf("Error reading input file.\n");
-        utils_abort();
-    }
-    readReturn = fscanf(file, "%le", x);
-    if(readReturn < 1)
-    {
-        printf("Error reading input file.\n");
-        utils_abort();
-    }
-}
-void utils_readLine(FILE *file, int *x)
-{
-    int readReturn;
-    char uselessString[1024];
-
-    readReturn = fscanf(file, "%s", uselessString);
-    if(readReturn < 1)
-    {
-        printf("Error reading input file.\n");
-        utils_abort();
-    }
-    readReturn = fscanf(file, "%d", x);
-    if(readReturn < 1)
-    {
-        printf("Error reading input file.\n");
-        utils_abort();
-    }
-}
-void utils_readLine(FILE *file, char *x)
-{
-    int readReturn;
-    char uselessString[1024];
-
-    readReturn = fscanf(file, "%s", uselessString);
-    if(readReturn < 1)
-    {
-        printf("Error reading input file.\n");
-        utils_abort();
-    }
-    readReturn = fscanf(file, "%s", x);
-    if(readReturn < 1)
-    {
-        printf("Error reading input file.\n");
-        utils_abort();
-    }
-}
-
-
 double utils_norm1(int n, double *A)
 {
     double oneNorm = 0.0;

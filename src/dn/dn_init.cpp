@@ -11,7 +11,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../utils.h"
+#include "../input_deck_reader.h"
 
+/*
+    Checks the status of input parameters.
+*/
+static void checkInput(bool isOk, int lineNumber)
+{
+    if(!isOk) {
+        printf("dn_init.cpp:input error at line %d\n", lineNumber);
+        utils_abort();
+    }
+}
 
 /*
     This function initializes the data.
@@ -28,30 +39,12 @@
 */
 double DnSolver::init(double dx, double dy)
 {
-    // Read moment.deck
-    FILE *file = fopen("dn.deck", "r");
-    if(file == NULL)
-    {
-        printf("Could not open input file: %s\n", "dn.deck");
-        utils_abort();
-    }
-
     int momentOrder, quadOrder;
     double cflFactor;
-    utils_readLine(file, &momentOrder);
-    utils_readLine(file, &quadOrder);
-    utils_readLine(file, &cflFactor);
 
-    fclose(file);
-
-
-    // Print out moment.deck
-    if(c_node == 0)
-    {
-        printf("momentOrder: %d\n", momentOrder);
-        printf("quadOrder:   %d\n", quadOrder);
-        printf("cflFactor:   %f\n", cflFactor);
-    }
+    checkInput(c_inputDeckReader.getValue("MOMENT_ORDER", &momentOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("QUAD_ORDER", &quadOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("CFL_FACTOR", &cflFactor), __LINE__);
     
     
     // Maximum value for delta t.

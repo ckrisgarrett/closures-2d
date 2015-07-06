@@ -7,6 +7,7 @@ binaries = []
 
 src_files = ["main.cpp",
              "utils.cpp",
+             "input_deck_reader.cpp",
              "comm.cpp",
              "moment/moment_boundaries.cpp",
              "moment/moment_init.cpp",

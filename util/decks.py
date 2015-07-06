@@ -11,22 +11,24 @@ def moment_deck(moment_order=3,
                 filter_tune=100,
                 cfl_factor=0.9):
     filterno = {"none": 0, "hauck": 1, "sspline": 2, "lanczos": 3}
-    return (
-"""MOMENT_ORDER %d
+    return ("""
+MOMENT_ORDER %d
 QUAD_ORDER %d
 FILTER_TYPE %d
 FILTER_TUNE %d
-CFL_FACTOR %f""" % (moment_order,
-                    quad_order,
-                    filterno[filter_type],
-                    filter_tune,
-                    cfl_factor))
+CFL_FACTOR %f
+""" % (moment_order,
+       quad_order,
+       filterno[filter_type],
+       filter_tune,
+       cfl_factor))
 
 def momopt_deck(moment_order=3, quad_order=30, cfl_factor=0.9, tol=1e-4,
         cond_h_max=1e10, cond_h_max_bfgs=20, max_iter=100, max_bgfs_iter=5,
         use_cg=1, theta=2.0, delta_ppn=1e-10, moment_type=0, opt_type=0,
         num_cuda_cards=1, num_threads_pre_cuda_card=2):
-    return ("""MOMENT_ORDER %d
+    return ("""
+MOMENT_ORDER %d
 QUAD_ORDER %d
 CFL_FACTOR %f
 TOL %f
@@ -40,21 +42,22 @@ DELTA_PPN %f
 MOMENT_TYPE %d
 OPTIMIZATION_TYPE %d
 NUM_CUDA_CARDS %d
-NUM_THREADS_PER_CUDA_CARD %d""" % (moment_order,
-                                   quad_order,
-                                   cfl_factor,
-                                   tol,
-                                   cond_h_max,
-                                   cond_h_max_bfgs,
-                                   max_iter,
-                                   max_bgfs_iter,
-                                   use_cg,
-                                   theta,
-                                   delta_ppn,
-                                   moment_type,
-                                   opt_type,
-                                   num_cuda_cards,
-                                   num_threads_pre_cuda_card))
+NUM_THREADS_PER_CUDA_CARD %d
+""" % (moment_order,
+       quad_order,
+       cfl_factor,
+       tol,
+       cond_h_max,
+       cond_h_max_bfgs,
+       max_iter,
+       max_bgfs_iter,
+       use_cg,
+       theta,
+       delta_ppn,
+       moment_type,
+       opt_type,
+       num_cuda_cards,
+       num_threads_pre_cuda_card))
 
 def input_deck(solver="kinetic",
                num_cells_x=50,
@@ -72,8 +75,8 @@ def input_deck(solver="kinetic",
                init_cond="delta",
                sigma=1.0):
     condno = {"delta": 0, "gaussian": 0, "lattice": 1, "smooth": 2}
-    return (
-"""SOLVER %s
+    return ("""
+SOLVER %s
 NUM_CELLS_X %d
 NUM_CELLS_Y %d
 NUM_MPI_PARTITIONS_X %d
@@ -87,18 +90,19 @@ OUT_DELTA_T %f
 GAUSSIAN_SIGMA %f
 FLOOR %f
 INIT_COND %d
-SIGMA %f""" % (solver,
-               num_cells_x,
-               num_cells_y,
-               num_mpi_partitions_x,
-               num_mpi_partitions_y,
-               a_x,
-               b_x,
-               a_y,
-               b_y,
-               t_final,
-               out_delta_t,
-               gaussian_sigma,
-               floor,
-               condno[init_cond],
-               sigma))
+SIGMA %f
+""" % (solver,
+       num_cells_x,
+       num_cells_y,
+       num_mpi_partitions_x,
+       num_mpi_partitions_y,
+       a_x,
+       b_x,
+       a_y,
+       b_y,
+       t_final,
+       out_delta_t,
+       gaussian_sigma,
+       floor,
+       condno[init_cond],
+       sigma))

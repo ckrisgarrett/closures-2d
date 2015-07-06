@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../utils.h"
+#include "../input_deck_reader.h"
 #include "opt/opt.h"
 #include "opt/fobj.h"
 #include <gsl/gsl_linalg.h>
@@ -27,6 +28,17 @@
 #ifdef USE_OPENMP
 #include <omp.h>
 #endif
+
+/*
+    Checks the status of input parameters.
+*/
+static void checkInput(bool isOk, int lineNumber)
+{
+    if(!isOk) {
+        printf("momopt_init.cpp:input error at line %d\n", lineNumber);
+        utils_abort();
+    }
+}
 
 /*
     This function initializes the data.
@@ -43,54 +55,24 @@
 */
 double MomOptSolver::init(double dx, double dy)
 {
-    // Read moment.deck
-    FILE *file = fopen("momopt.deck", "r");
-    if(file == NULL)
-    {
-        printf("Could not open input file: %s\n", "momopt.deck");
-        utils_abort();
-    }
-
     int momentOrder, quadOrder;
     double cflFactor;
-    utils_readLine(file, &momentOrder);
-    utils_readLine(file, &quadOrder);
-    utils_readLine(file, &cflFactor);
-    utils_readLine(file, &c_tolerance);
-    utils_readLine(file, &c_condHMax);
-    utils_readLine(file, &c_condHMaxBfgs);
-    utils_readLine(file, &c_maxIter);
-    utils_readLine(file, &c_maxIterBfgs);
-    utils_readLine(file, &c_useClebschGordan);
-    utils_readLine(file, &c_theta);
-    utils_readLine(file, &c_deltaPPn);
-    utils_readLine(file, &c_momentType);
-    utils_readLine(file, &c_optType);
-    utils_readLine(file, &c_numCudaCards);
-    utils_readLine(file, &c_numThreadsPerCudaCard);
 
-    fclose(file);
-
-
-    // Print out moment.deck
-    if(c_node == 0)
-    {
-        printf("momentOrder:    %d\n", momentOrder);
-        printf("quadOrder:      %d\n", quadOrder);
-        printf("cflFactor:      %f\n", cflFactor);
-        printf("tolerance:      %f\n", c_tolerance);
-        printf("condHMax:       %f\n", c_condHMax);
-        printf("condHMaxBfgs:   %f\n", c_condHMaxBfgs);
-        printf("maxIter:        %d\n", c_maxIter);
-        printf("maxIterBfgs:    %d\n", c_maxIterBfgs);
-        printf("clebshGordan:   %d\n", c_useClebschGordan);
-        printf("theta:          %f\n", c_theta);
-        printf("deltaPPn:       %f\n", c_deltaPPn);
-        printf("momentType:     %d\n", c_momentType);
-        printf("optType:        %d\n", c_optType);
-        printf("numCudaCards:   %d\n", c_numCudaCards);
-        printf("threadsPerGPU:  %d\n", c_numThreadsPerCudaCard);
-    }
+    checkInput(c_inputDeckReader.getValue("MOMENT_ORDER", &momentOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("QUAD_ORDER", &quadOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("CFL_FACTOR", &cflFactor), __LINE__);
+    checkInput(c_inputDeckReader.getValue("TOL", &c_tolerance), __LINE__);
+    checkInput(c_inputDeckReader.getValue("COND_H_MAX", &c_condHMax), __LINE__);
+    checkInput(c_inputDeckReader.getValue("COND_H_MAX_BFGS", &c_condHMaxBfgs), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MAX_ITER", &c_maxIter), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MAX_BFGS_ITER", &c_maxIterBfgs), __LINE__);
+    checkInput(c_inputDeckReader.getValue("USE_CLEBSCH_GORDAN", &c_useClebschGordan), __LINE__);
+    checkInput(c_inputDeckReader.getValue("THETA", &c_theta), __LINE__);
+    checkInput(c_inputDeckReader.getValue("DELTA_PPN", &c_deltaPPn), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMENT_TYPE", &c_momentType), __LINE__);
+    checkInput(c_inputDeckReader.getValue("OPTIMIZATION_TYPE", &c_optType), __LINE__);
+    checkInput(c_inputDeckReader.getValue("NUM_CUDA_CARDS", &c_numCudaCards), __LINE__);
+    checkInput(c_inputDeckReader.getValue("NUM_THREADS_PER_CUDA_CARD", &c_numThreadsPerCudaCard), __LINE__);
     
     
     // Maximum value for delta t.

@@ -95,9 +95,9 @@ class Test(object):
         return "out_0.000_0.%s" % self.ext
 
     def run(self, commands):
-        with util.ResetFile(*self.setup_files.keys()):
-            for dst,txt in self.setup_files.items():
-                with open(dst, "w") as f:
+        with util.ResetFile("input.deck"):
+            with open("input.deck", "w") as f:
+                for dst, txt in self.setup_files.items():
                     f.write(txt)
             with util.Timed(self.log_path):
                 for e in commands:

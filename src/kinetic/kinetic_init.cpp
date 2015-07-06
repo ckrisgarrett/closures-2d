@@ -10,7 +10,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../utils.h"
+#include "../input_deck_reader.h"
 
+/*
+    Checks the status of input parameters.
+*/
+static void checkInput(bool isOk, int lineNumber)
+{
+    if(!isOk) {
+        printf("kinetic_init.cpp:input error at line %d\n", lineNumber);
+        utils_abort();
+    }
+}
 
 /*
     This function initializes the data.
@@ -27,28 +38,11 @@
 */
 double KineticSolver::init(double dx, double dy)
 {
-    // Read moment.deck
-    FILE *file = fopen("kinetic.deck", "r");
-    if(file == NULL)
-    {
-        printf("Could not open input file: %s\n", "moment.deck");
-        utils_abort();
-    }
-
     int quadOrder;
     double cflFactor;
-    utils_readLine(file, &quadOrder);
-    utils_readLine(file, &cflFactor);
 
-    fclose(file);
-
-
-    // Print out moment.deck
-    if(c_node == 0)
-    {
-        printf("quadOrder:   %d\n", quadOrder);
-        printf("cflFactor:   %f\n", cflFactor);
-    }
+    checkInput(c_inputDeckReader.getValue("QUAD_ORDER", &quadOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("CFL_FACTOR", &cflFactor), __LINE__);
     
     
     // Maximum value for delta t.

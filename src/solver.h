@@ -7,6 +7,8 @@
 #ifndef _SOLVER_H
 #define _SOLVER_H
 
+#include "input_deck_reader.h"
+
 #define I2D(i,j) ((i)*(c_gY[3]-c_gY[0]+1) + (j))
 #define I3D(i,j,k) (((i)*(c_gY[3]-c_gY[0]+1) + (j))*(c_vectorSize) + (k))
 
@@ -47,6 +49,8 @@ public:
     double c_floor;                 // Smallest value for the density initial condition
     int c_initCond;                 // 0: Gaussian/Linesource   1: Lattice   2: Periodic
     int c_vectorSize;               // number of moments or quadrature points (Sn)
+    
+    InputDeckReader c_inputDeckReader;
     
     enum
     {

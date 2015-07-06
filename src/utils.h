@@ -16,9 +16,6 @@
 extern "C"
 void utils_abort();
 
-void utils_readLine(FILE *file, double *x);
-void utils_readLine(FILE *file, int *x);
-void utils_readLine(FILE *file, char *x);
 double utils_norm1(int n, double *A);
 void utils_getGaussianWeightsAndNodes(int n, double *w, double *mu);
 

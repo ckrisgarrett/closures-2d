@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include "utils.h"
+#include "input_deck_reader.h"
 #include "moment/moment_solver.h"
 #include "kinetic/kinetic_solver.h"
 #include "momopt/momopt_solver.h"
@@ -22,12 +23,27 @@
 #include <omp.h>
 #endif
 
+/*
+    Checks the status of input parameters.
+*/
+static void checkInput(bool isOk, int lineNumber)
+{
+    if(!isOk) {
+        printf("main.cpp:input error at line %d\n", lineNumber);
+        utils_abort();
+    }
+}
 
 /*
     Start the program.
 */
 int main(int argc, char **argv)
 {
+    InputDeckReader inputDeckReader;
+    char solverType[100];
+    int numCellsX, numCellsY, numNodesX, numNodesY, initCond;
+    double ax, ay, bx, by, tFinal, outDeltaT, gaussianSigma, initfloor, sigma;
+
     // Initialize MPI.
     #ifdef USE_MPI
     MPI_Init(&argc, &argv);
@@ -44,53 +60,28 @@ int main(int argc, char **argv)
     
 
     // Read input.deck
-    FILE *file = fopen("input.deck", "r");
-    if(file == NULL)
-    {
-        printf("Could not open input file: %s\n", "input.deck");
-        utils_abort();
-    }
-
-    char solverType[100];
-    int numCellsX, numCellsY, numNodesX, numNodesY, initCond;
-    double ax, ay, bx, by, tFinal, outDeltaT, gaussianSigma, initfloor, sigma;
-    utils_readLine(file, solverType);
-    utils_readLine(file, &numCellsX);
-    utils_readLine(file, &numCellsY);
-    utils_readLine(file, &numNodesX);
-    utils_readLine(file, &numNodesY);
-    utils_readLine(file, &ax);
-    utils_readLine(file, &bx);
-    utils_readLine(file, &ay);
-    utils_readLine(file, &by);
-    utils_readLine(file, &tFinal);
-    utils_readLine(file, &outDeltaT);
-    utils_readLine(file, &gaussianSigma);
-    utils_readLine(file, &initfloor);
-    utils_readLine(file, &initCond);
-    utils_readLine(file, &sigma);
-    
-    fclose(file);
+    inputDeckReader.readInputDeck("input.deck");
+    checkInput(inputDeckReader.getValue("SOLVER", solverType), __LINE__);
+    checkInput(inputDeckReader.getValue("NUM_CELLS_X", &numCellsX), __LINE__);
+    checkInput(inputDeckReader.getValue("NUM_CELLS_Y", &numCellsY), __LINE__);
+    checkInput(inputDeckReader.getValue("NUM_MPI_PARTITIONS_X", &numNodesX), __LINE__);
+    checkInput(inputDeckReader.getValue("NUM_MPI_PARTITIONS_Y", &numNodesY), __LINE__);
+    checkInput(inputDeckReader.getValue("A_X", &ax), __LINE__);
+    checkInput(inputDeckReader.getValue("B_X", &bx), __LINE__);
+    checkInput(inputDeckReader.getValue("A_Y", &ay), __LINE__);
+    checkInput(inputDeckReader.getValue("B_Y", &by), __LINE__);
+    checkInput(inputDeckReader.getValue("T_FINAL", &tFinal), __LINE__);
+    checkInput(inputDeckReader.getValue("OUT_DELTA_T", &outDeltaT), __LINE__);
+    checkInput(inputDeckReader.getValue("GAUSSIAN_SIGMA", &gaussianSigma), __LINE__);
+    checkInput(inputDeckReader.getValue("FLOOR", &initfloor), __LINE__);
+    checkInput(inputDeckReader.getValue("INIT_COND", &initCond), __LINE__);
+    checkInput(inputDeckReader.getValue("SIGMA", &sigma), __LINE__);
 
 
     // Print out input.deck
     if(node == 0)
     {
-        printf("solverType:         %s\n", solverType);
-        printf("numCellsX:          %d\n", numCellsX);
-        printf("numCellsY:          %d\n", numCellsY);
-        printf("numMpiPartitionsX:  %d\n", numNodesX);
-        printf("numMpiPartitionsY:  %d\n", numNodesY);
-        printf("aX:                 %f\n", ax);
-        printf("bX:                 %f\n", bx);
-        printf("aY:                 %f\n", ay);
-        printf("bY:                 %f\n", by);
-        printf("tFinal:             %f\n", tFinal);
-        printf("outDeltaT:          %f\n", outDeltaT);
-        printf("gaussianSigma:      %f\n", gaussianSigma);
-        printf("initfloor:              %f\n", initfloor);
-        printf("initCond:           %d\n", initCond);
-        printf("sigma:              %f\n", sigma);
+        inputDeckReader.print();
     }
 
 
@@ -104,15 +95,14 @@ int main(int argc, char **argv)
         solver = new MomOptSolver();
     else if(strcmp(solverType, "dn") == 0)
         solver = new DnSolver();
-    else
-    {
+    else {
         printf("Solver type does not exist\n.");
         utils_abort();
     }
     solver->c_gaussianSigma = gaussianSigma;
     solver->c_floor = initfloor;
     solver->c_initCond = initCond;
-    
+    solver->c_inputDeckReader = inputDeckReader;
     
     // Set the number of openmp threads.
     // This must be after readInputDeck and before init.
@@ -359,4 +349,3 @@ void Solver::initializeGrid(int numGhostCells, double dx, double dy, double sigm
         }
     }
 }
-
