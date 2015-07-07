@@ -98,7 +98,7 @@ void Solver::communicateBoundaries()
                      recvSouthTag, MPI_COMM_WORLD, &mpiRequest[5]);
     MPI_Irecv(recvEast, boundarySizeY, MPI_CHAR, mpiIndex('x', c_nodeX + 1),
                      recvEastTag,MPI_COMM_WORLD, &mpiRequest[6]);
-    MPI_Irecv(recvWest, boundarySizeY, MPI_CHAR, mpiIndex('x', c_node - 1),
+    MPI_Irecv(recvWest, boundarySizeY, MPI_CHAR, mpiIndex('x', c_nodeX - 1),
                      recvWestTag, MPI_COMM_WORLD, &mpiRequest[7]);
     
     // Wait for Send/Recv
