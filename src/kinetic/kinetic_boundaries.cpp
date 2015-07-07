@@ -32,68 +32,31 @@ void KineticSolver::getInnerBoundaries(char *north, char *south, char *east, cha
     int y1 = c_gY[1];
     int y2 = c_gY[2] + 1 - NUM_GHOST_CELLS;
     
-    
-    // North
-    if(north != NULL)
-    {
-        for(int i = c_gX[0]; i <= c_gX[3]; i++)
-        {
-            for(int j = 0; j < NUM_GHOST_CELLS; j++)
-            {
-                int index = i + j * (c_gX[3] - c_gX[0] + 1);
-                memcpy(&north[index * c_numQuadPoints * sizeof(double)], 
-                       &c_kinetic[I3D(i,y2+j,0)], 
-                       c_numQuadPoints * sizeof(double));
-            }
-        }
-    }
-    
-    // South
-    if(south != NULL)
-    {
-        for(int i = c_gX[0]; i <= c_gX[3]; i++)
-        {
-            for(int j = 0; j < NUM_GHOST_CELLS; j++)
-            {
-                int index = i + j * (c_gX[3] - c_gX[0] + 1);
-                memcpy(&south[index * c_numQuadPoints * sizeof(double)], 
-                       &c_kinetic[I3D(i,y1+j,0)], 
-                       c_numQuadPoints * sizeof(double));
-            }
-        }
-    }
 
-    // East
-    if(east != NULL)
-    {
-        for(int i = c_gY[0]; i <= c_gY[3]; i++)
-        {
-            for(int j = 0; j < NUM_GHOST_CELLS; j++)
-            {
-                int index = i + j * (c_gY[3] - c_gY[0] + 1);
-                memcpy(&east[index * c_numQuadPoints * sizeof(double)], 
-                       &c_kinetic[I3D(x2+j,i,0)], 
-                       c_numQuadPoints * sizeof(double));
-            }
-        }
-    }
+    // North and south
+    for(int i = c_gX[0]; i <= c_gX[3]; i++) {
+    for(int j = 0; j < NUM_GHOST_CELLS; j++) {
+        int index = i + j * (c_gX[3] - c_gX[0] + 1);
+        memcpy(&north[index * c_numQuadPoints * sizeof(double)],
+               &c_kinetic[I3D(i,y2+j,0)],
+               c_numQuadPoints * sizeof(double));
+        memcpy(&south[index * c_numQuadPoints * sizeof(double)],
+               &c_kinetic[I3D(i,y1+j,0)],
+               c_numQuadPoints * sizeof(double));
+    }}
 
-    // West
-    if(west != NULL)
-    {
-        for(int i = c_gY[0]; i <= c_gY[3]; i++)
-        {
-            for(int j = 0; j < NUM_GHOST_CELLS; j++)
-            {
-                int index = i + j * (c_gY[3] - c_gY[0] + 1);
-                memcpy(&west[index * c_numQuadPoints * sizeof(double)],
-                       &c_kinetic[I3D(x1+j,i,0)], 
-                       c_numQuadPoints * sizeof(double));
-            }
-        }
-    }
+    // East and west
+    for(int i = c_gY[0]; i <= c_gY[3]; i++) {
+    for(int j = 0; j < NUM_GHOST_CELLS; j++) {
+        int index = i + j * (c_gY[3] - c_gY[0] + 1);
+        memcpy(&east[index * c_numQuadPoints * sizeof(double)],
+               &c_kinetic[I3D(x2+j,i,0)],
+               c_numQuadPoints * sizeof(double));
+        memcpy(&west[index * c_numQuadPoints * sizeof(double)],
+               &c_kinetic[I3D(x1+j,i,0)],
+               c_numQuadPoints * sizeof(double));
+    }}
 }
-
 
 /*
     Sets the outer boundaries for this node's data.
@@ -106,65 +69,29 @@ void KineticSolver::setOuterBoundaries(char *north, char *south, char *east, cha
     int y3 = c_gY[2] + 1;
     
     
-    // North
-    if(north != NULL)
-    {
-        for(int i = c_gX[0]; i <= c_gX[3]; i++)
-        {
-            for(int j = 0; j < NUM_GHOST_CELLS; j++)
-            {
-                int index = i + j * (c_gX[3] - c_gX[0] + 1);
-                memcpy(&c_kinetic[I3D(i,y3+j,0)], 
-                       &north[index * c_numQuadPoints * sizeof(double)], 
-                       c_numQuadPoints * sizeof(double));
-            }
-        }
-    }
+    // North and south
+    for(int i = c_gX[0]; i <= c_gX[3]; i++) {
+    for(int j = 0; j < NUM_GHOST_CELLS; j++) {
+        int index = i + j * (c_gX[3] - c_gX[0] + 1);
+        memcpy(&c_kinetic[I3D(i,y3+j,0)],
+               &north[index * c_numQuadPoints * sizeof(double)],
+               c_numQuadPoints * sizeof(double));
+        memcpy(&c_kinetic[I3D(i,y0+j,0)],
+               &south[index * c_numQuadPoints * sizeof(double)],
+               c_numQuadPoints * sizeof(double));
+    }}
 
-    // South
-    if(south != NULL)
-    {
-        for(int i = c_gX[0]; i <= c_gX[3]; i++)
-        {
-            for(int j = 0; j < NUM_GHOST_CELLS; j++)
-            {
-                int index = i + j * (c_gX[3] - c_gX[0] + 1);
-                memcpy(&c_kinetic[I3D(i,y0+j,0)], 
-                       &south[index * c_numQuadPoints * sizeof(double)], 
-                       c_numQuadPoints * sizeof(double));
-            }
-        }
-    }
-
-    // East
-    if(east != NULL)
-    {
-        for(int i = c_gY[0]; i <= c_gY[3]; i++)
-        {
-            for(int j = 0; j < NUM_GHOST_CELLS; j++)
-            {
-                int index = i + j * (c_gY[3] - c_gY[0] + 1);
-                memcpy(&c_kinetic[I3D(x3+j,i,0)], 
-                       &east[index * c_numQuadPoints * sizeof(double)], 
-                       c_numQuadPoints * sizeof(double));
-            }
-        }
-    }
-
-    // West
-    if(west != NULL)
-    {
-        for(int i = c_gY[0]; i <= c_gY[3]; i++)
-        {
-            for(int j = 0; j < NUM_GHOST_CELLS; j++)
-            {
-                int index = i + j * (c_gY[3] - c_gY[0] + 1);
-                memcpy(&c_kinetic[I3D(x0+j,i,0)], 
-                       &west[index * c_numQuadPoints * sizeof(double)], 
-                       c_numQuadPoints * sizeof(double));
-            }
-        }
-    }
+    // East and west
+    for(int i = c_gY[0]; i <= c_gY[3]; i++) {
+    for(int j = 0; j < NUM_GHOST_CELLS; j++) {
+        int index = i + j * (c_gY[3] - c_gY[0] + 1);
+        memcpy(&c_kinetic[I3D(x3+j,i,0)],
+               &east[index * c_numQuadPoints * sizeof(double)],
+               c_numQuadPoints * sizeof(double));
+        memcpy(&c_kinetic[I3D(x0+j,i,0)],
+               &west[index * c_numQuadPoints * sizeof(double)],
+               c_numQuadPoints * sizeof(double));
+    }}
 }
 
 void KineticSolver::duplicateBoundaries()

@@ -9,6 +9,26 @@
 #ifdef USE_MPI
 #include <mpi.h>
 
+/*
+    Given the node for the x,y direction, returns the 1D index for the node.
+*/
+int Solver::mpiIndex(char direction, int node)
+{
+    int nodeX = c_nodeX;
+    int nodeY = c_nodeY;
+    
+    if(direction == 'x')
+        nodeX = (node + c_numNodesX) % c_numNodesX;
+    else if(direction == 'y')
+        nodeY = (node + c_numNodesY) % c_numNodesY;
+    else {
+        printf("Direction MPI Error.\n");
+        utils_abort();
+    }
+    
+    return nodeY + c_numNodesY * nodeX;
+}
+
 void Solver::communicateBoundaries()
 {
     // Variables.
@@ -22,7 +42,8 @@ void Solver::communicateBoundaries()
     int recvWestTag  = 3;
     int sendWestTag  = 4;
     int recvEastTag  = 4;
-    MPI_Status  mpiStatus;
+    int mpiError;
+    MPI_Request mpiRequest[8];
 
     // Variables to allocate only once.
     static bool firstTime = true;
@@ -38,25 +59,20 @@ void Solver::communicateBoundaries()
     if(firstTime)
     {
         firstTime = false;
-        if(c_nodeY < c_numNodesY - 1)
-        {
-            sendNorth = (char*)malloc(boundarySizeX);
-            recvNorth = (char*)malloc(boundarySizeX);
-        }
-        if(c_nodeY > 0)
-        {
-            sendSouth = (char*)malloc(boundarySizeX);
-            recvSouth = (char*)malloc(boundarySizeX);
-        }
-        if(c_nodeX < c_numNodesX - 1)
-        {
-            sendEast  = (char*)malloc(boundarySizeY);
-            recvEast  = (char*)malloc(boundarySizeY);
-        }
-        if(c_nodeX > 0)
-        {
-            sendWest  = (char*)malloc(boundarySizeY);
-            recvWest  = (char*)malloc(boundarySizeY);
+
+        sendNorth = (char*)malloc(boundarySizeX);
+        recvNorth = (char*)malloc(boundarySizeX);
+        sendSouth = (char*)malloc(boundarySizeX);
+        recvSouth = (char*)malloc(boundarySizeX);
+        sendEast  = (char*)malloc(boundarySizeY);
+        recvEast  = (char*)malloc(boundarySizeY);
+        sendWest  = (char*)malloc(boundarySizeY);
+        recvWest  = (char*)malloc(boundarySizeY);
+
+        if(sendNorth == NULL || sendSouth == NULL || sendEast == NULL || sendWest == NULL ||
+           recvNorth == NULL || recvSouth == NULL || recvEast == NULL || recvWest == NULL) {
+            printf("comm.cpp: Memory allocation failed.\n");
+            utils_abort();
         }
     }
     
@@ -65,46 +81,32 @@ void Solver::communicateBoundaries()
     getInnerBoundaries(sendNorth, sendSouth, sendEast, sendWest);
     
     
-    // Send/Recv data north.
-    if(c_nodeY < c_numNodesY - 1)
-    {
-        MPI_Sendrecv(sendNorth, boundarySizeX, MPI_CHAR, c_node + 1, 
-                     sendNorthTag, 
-                     recvNorth, boundarySizeX, MPI_CHAR, c_node + 1,
-                     recvNorthTag, 
-                     MPI_COMM_WORLD, &mpiStatus);
-    }
+    // Send
+        MPI_Isend(sendNorth, boundarySizeX, MPI_CHAR, mpiIndex('y', c_nodeY + 1),
+                     sendNorthTag, MPI_COMM_WORLD, &mpiRequest[0]);
+        MPI_Isend(sendSouth, boundarySizeX, MPI_CHAR, mpiIndex('y', c_nodeY - 1),
+                     sendSouthTag, MPI_COMM_WORLD, &mpiRequest[1]);
+        MPI_Isend(sendEast, boundarySizeY, MPI_CHAR, mpiIndex('x', c_nodeX + 1), 
+                     sendEastTag, MPI_COMM_WORLD, &mpiRequest[2]);
+        MPI_Isend(sendWest, boundarySizeY, MPI_CHAR, mpiIndex('x', c_nodeX - 1), 
+                     sendWestTag, MPI_COMM_WORLD, &mpiRequest[3]);
     
-    // Send data south.
-    if(c_nodeY > 0)
-    {
-        MPI_Sendrecv(sendSouth, boundarySizeX, MPI_CHAR, c_node - 1, 
-                     sendSouthTag, 
-                     recvSouth, boundarySizeX, MPI_CHAR, c_node - 1,
-                     recvSouthTag,
-                     MPI_COMM_WORLD, &mpiStatus);
-    }
+    // Receive
+    MPI_Irecv(recvNorth, boundarySizeX, MPI_CHAR, mpiIndex('y', c_nodeY + 1),
+                     recvNorthTag, MPI_COMM_WORLD, &mpiRequest[4]);
+    MPI_Irecv(recvSouth, boundarySizeX, MPI_CHAR, mpiIndex('y', c_nodeY - 1),
+                     recvSouthTag, MPI_COMM_WORLD, &mpiRequest[5]);
+    MPI_Irecv(recvEast, boundarySizeY, MPI_CHAR, mpiIndex('x', c_nodeX + 1),
+                     recvEastTag,MPI_COMM_WORLD, &mpiRequest[6]);
+    MPI_Irecv(recvWest, boundarySizeY, MPI_CHAR, mpiIndex('x', c_node - 1),
+                     recvWestTag, MPI_COMM_WORLD, &mpiRequest[7]);
     
-    // Send data east.
-    if(c_nodeX < c_numNodesX - 1)
-    {
-        MPI_Sendrecv(sendEast, boundarySizeY, MPI_CHAR, c_node + c_numNodesY, 
-                     sendEastTag, 
-                     recvEast, boundarySizeY, MPI_CHAR, c_node + c_numNodesY,
-                     recvEastTag,
-                     MPI_COMM_WORLD, &mpiStatus);
+    // Wait for Send/Recv
+    mpiError = MPI_Waitall(8, mpiRequest, MPI_STATUSES_IGNORE);
+    if(mpiError != MPI_SUCCESS) {
+        printf("comm.cpp: MPI Error %d.\n", mpiError);
+        utils_abort();
     }
-    
-    // Send data west.
-    if(c_nodeX > 0)
-    {
-        MPI_Sendrecv(sendWest, boundarySizeY, MPI_CHAR, c_node - c_numNodesY, 
-                     sendWestTag, 
-                     recvWest, boundarySizeY, MPI_CHAR, c_node - c_numNodesY,
-                     recvWestTag,
-                     MPI_COMM_WORLD, &mpiStatus);
-    }
-    
     
     // Set boundaries.
     setOuterBoundaries(recvNorth, recvSouth, recvEast, recvWest);

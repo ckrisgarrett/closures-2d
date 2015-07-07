@@ -27,6 +27,7 @@ public:
     virtual void duplicateBoundaries() = 0;
     
     void communicateBoundaries();
+    int mpiIndex(char, int);
     void initializeGrid(int numGhostCells, double dx, double dy, double sigma);
     
     int c_node;                     // MPI node index
