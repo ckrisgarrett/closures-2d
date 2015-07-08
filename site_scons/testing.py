@@ -17,7 +17,7 @@ REGENERATE = False
 INITCOND = ["delta", "gaussian", "lattice", "smooth"]
 SOLVER = ["kinetic", "moment", "momopt"]
 MOMENT_FILTER = ["none", "sspline", "hauck", "lanczos"]
-
+MOMOPT_TYPE = ["mn", "ppn"]
 DEVNULL = open(os.devnull, "w+b")
 
 
@@ -47,11 +47,12 @@ def regression_test(target, source, env):
                             else:
                                 MomentRegressionTest(str(target[0]), f, i).run(commands)
                     elif s == "momopt":
-                        util.bullet(str(target[0]), "%s,%s,%s" % (p, s, i), wait=False)
-                        if composite:
-                            MomoptCompositeRegressionTest(str(target[0]), i).run(commands)
-                        else:
-                            MomoptRegressionTest(str(target[0]), i).run(commands)
+                        for t in MOMOPT_TYPE:
+                            util.bullet(str(target[0]), "%s,%s,%s(%s)" % (p, s, i, t), wait=False)
+                            if composite:
+                                MomoptCompositeRegressionTest(str(target[0]), t, i).run(commands)
+                            else:
+                                MomoptRegressionTest(str(target[0]), t, i).run(commands)
     except:
         try:
             os.unlink(str(target[0]))
@@ -71,8 +72,9 @@ def convergence_test(target, source, env):
                     util.bullet(str(target[0]), "%s(%s)" % (s, f), wait=False)
                     MomentConvergenceTest(str(target[0]), f).run([os.path.abspath(str(source[0]))], 5)
             elif s == "momopt":
-                util.bullet(str(target[0]), "%s" % s, wait=False)
-                MomoptConvergenceTest(str(target[0])).run([os.path.abspath(str(source[0]))], 5)
+                for t in MOMOPT_TYPE:
+                    util.bullet(str(target[0]), "%s(%s)" % (s, t), wait=False)
+                    MomoptConvergenceTest(str(target[0]), t).run([os.path.abspath(str(source[0]))], 5)
     except:
         try:
             os.unlink(str(target[0]))
@@ -274,29 +276,30 @@ class MomentCompositeRegressionTest(CompositeRegressionTest, MomentRegressionTes
         return super(MomentCompositeRegressionTest, self).run(commands)
 
 class MomoptRegressionTest(RegressionTest):
-    def __init__(self, log_path, initcond):
+    def __init__(self, log_path, moment_type, initcond):
         super(MomoptRegressionTest, self).__init__()
         self.parser = util.formats.Moment
         self.ext = "pn"
         self.solver = "momopt"
         self.initcond = initcond
         self.log_path = log_path
+        self.moment_type = moment_type
 
     @property
     def reference_path(self):
-        return os.path.join("tests", "regression", self.solver, "%s.pn" % self.initcond)
+        return os.path.join("tests", "regression", self.solver, self.initcond, "%s.pn" % self.moment_type)
 
     def run(self, commands):
-        self.setup_files["momopt.deck"] = util.decks.momopt_deck()
+        self.setup_files["momopt.deck"] = util.decks.momopt_deck(moment_type=self.moment_type)
         return super(MomoptRegressionTest, self).run(commands)
 
 class MomoptCompositeRegressionTest(CompositeRegressionTest, MomoptRegressionTest):
-    def __init__(self, log_path, initcond):
+    def __init__(self, log_path, moment_type, initcond):
         CompositeRegressionTest.__init__(self, 2, 2)
-        MomoptRegressionTest.__init__(self, log_path, initcond)
+        MomoptRegressionTest.__init__(self, log_path, moment_type, initcond)
 
     def run(self, commands):
-        self.setup_files["momopt.deck"] = util.decks.momopt_deck()
+        self.setup_files["momopt.deck"] = util.decks.momopt_deck(moment_type=self.moment_type)
         return super(MomoptCompositeRegressionTest, self).run(commands)
 
 class ConvergenceTest(Test):
@@ -308,9 +311,11 @@ class ConvergenceTest(Test):
     def current_path(self):
         return "out_0.330_0.%s" % self.ext
 
-    def run(self, commands, iterations):
-        samples = []
+    def run(self, commands, iterations, initial_sample=None):
         errors = []
+        samples = []
+        if initial_sample:
+            samples.append(initial_sample)
         for i in reversed(range(iterations)):
             self.setup_files["input.deck"] = util.decks.input_deck(solver=self.solver,
                 num_cells_x=32*2**i, num_cells_y=32*2**i, t_final=0.33, init_cond="smooth")
@@ -353,13 +358,18 @@ class MomentConvergenceTest(ConvergenceTest):
         return super(MomentConvergenceTest, self).run(commands, iterations)
 
 class MomoptConvergenceTest(ConvergenceTest):
-    def __init__(self, log_path):
+    def __init__(self, log_path, moment_type):
         super(MomoptConvergenceTest, self).__init__()
         self.parser = util.formats.Moment
         self.ext = "pn"
         self.solver = "momopt"
         self.log_path = log_path
+        self.moment_type = moment_type
 
     def run(self, commands, iterations):
-        self.setup_files["momopt.deck"] = util.decks.momopt_deck()
-        return super(MomoptConvergenceTest, self).run(commands, iterations)
+        self.setup_files["momopt.deck"] = util.decks.momopt_deck(
+            moment_type=self.moment_type)
+        return super(MomoptConvergenceTest, self).run(commands,
+            iterations - 1, initial_sample=util.formats.Moment(os.path.join(
+                "tests", "convergence", "moment",
+                "{}.pn".format(2**(iterations - 1)))))

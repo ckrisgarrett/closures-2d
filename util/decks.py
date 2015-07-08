@@ -2,7 +2,7 @@ def kinetic_deck(quad_order=12,
                  cfl_factor=0.9):
     return (
 """QUAD_ORDER %d
-CFL_FACTOR %f""" % (quad_order,
+CFL_FACTOR %.17f""" % (quad_order,
                     cfl_factor))
 
 def moment_deck(moment_order=3,
@@ -16,7 +16,7 @@ MOMENT_ORDER %d
 QUAD_ORDER %d
 FILTER_TYPE %d
 FILTER_TUNE %d
-CFL_FACTOR %f
+CFL_FACTOR %.17f
 """ % (moment_order,
        quad_order,
        filterno[filter_type],
@@ -25,20 +25,21 @@ CFL_FACTOR %f
 
 def momopt_deck(moment_order=3, quad_order=30, cfl_factor=0.9, tol=1e-4,
         cond_h_max=1e10, cond_h_max_bfgs=20, max_iter=100, max_bgfs_iter=5,
-        use_cg=1, theta=2.0, delta_ppn=1e-10, moment_type=0, opt_type=0,
+        use_cg=1, theta=2.0, delta_ppn=1e-10, moment_type="mn", opt_type=0,
         num_cuda_cards=1, num_threads_pre_cuda_card=2):
+    momtypenum = {"mn": 0, "ppn": 1}
     return ("""
 MOMENT_ORDER %d
 QUAD_ORDER %d
-CFL_FACTOR %f
-TOL %f
-COND_H_MAX %f
+CFL_FACTOR %.17f
+TOL %.17f
+COND_H_MAX %.17f
 COND_H_MAX_BFGS %d
 MAX_ITER %d
 MAX_BFGS_ITER %d
 USE_CLEBSCH_GORDAN %d
-THETA %f
-DELTA_PPN %f
+THETA %.17f
+DELTA_PPN %.17f
 MOMENT_TYPE %d
 OPTIMIZATION_TYPE %d
 NUM_CUDA_CARDS %d
@@ -54,7 +55,7 @@ NUM_THREADS_PER_CUDA_CARD %d
        use_cg,
        theta,
        delta_ppn,
-       moment_type,
+       momtypenum[moment_type],
        opt_type,
        num_cuda_cards,
        num_threads_pre_cuda_card))
@@ -81,16 +82,16 @@ NUM_CELLS_X %d
 NUM_CELLS_Y %d
 NUM_MPI_PARTITIONS_X %d
 NUM_MPI_PARTITIONS_Y %d
-A_X %f
-B_X %f
-A_Y %f
-B_Y %f
-T_FINAL %f
-OUT_DELTA_T %f
-GAUSSIAN_SIGMA %f
-FLOOR %f
+A_X %.17f
+B_X %.17f
+A_Y %.17f
+B_Y %.17f
+T_FINAL %.17f
+OUT_DELTA_T %.17f
+GAUSSIAN_SIGMA %.17f
+FLOOR %.17f
 INIT_COND %d
-SIGMA %f
+SIGMA %.17f
 """ % (solver,
        num_cells_x,
        num_cells_y,
