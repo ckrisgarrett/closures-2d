@@ -44,6 +44,7 @@ void Solver::communicateBoundaries()
     int recvEastTag  = 4;
     int mpiError;
     MPI_Request mpiRequest[8];
+    int requestCount = 0;
 
     // Variables to allocate only once.
     static bool firstTime = true;
@@ -60,19 +61,37 @@ void Solver::communicateBoundaries()
     {
         firstTime = false;
 
-        sendNorth = (char*)malloc(boundarySizeX);
-        recvNorth = (char*)malloc(boundarySizeX);
-        sendSouth = (char*)malloc(boundarySizeX);
-        recvSouth = (char*)malloc(boundarySizeX);
-        sendEast  = (char*)malloc(boundarySizeY);
-        recvEast  = (char*)malloc(boundarySizeY);
-        sendWest  = (char*)malloc(boundarySizeY);
-        recvWest  = (char*)malloc(boundarySizeY);
-
-        if(sendNorth == NULL || sendSouth == NULL || sendEast == NULL || sendWest == NULL ||
-           recvNorth == NULL || recvSouth == NULL || recvEast == NULL || recvWest == NULL) {
-            printf("comm.cpp: Memory allocation failed.\n");
-            utils_abort();
+        if(c_initCond == INITCOND_PERIODIC || c_nodeY < c_numNodesY - 1) {
+            sendNorth = (char*)malloc(boundarySizeX);
+            recvNorth = (char*)malloc(boundarySizeX);
+            if(sendNorth == NULL || recvNorth == NULL) {
+                printf("comm.cpp: Memory allocation failed.\n");
+                utils_abort();
+            }
+        }
+        if(c_initCond == INITCOND_PERIODIC || c_nodeY > 0) {
+            sendSouth = (char*)malloc(boundarySizeX);
+            recvSouth = (char*)malloc(boundarySizeX);
+            if(sendSouth == NULL || recvSouth == NULL) {
+                printf("comm.cpp: Memory allocation failed.\n");
+                utils_abort();
+            }
+        }
+        if(c_initCond == INITCOND_PERIODIC || c_nodeX < c_numNodesX - 1) {
+            sendEast  = (char*)malloc(boundarySizeY);
+            recvEast  = (char*)malloc(boundarySizeY);
+            if(sendEast == NULL || recvEast == NULL) {
+                printf("comm.cpp: Memory allocation failed.\n");
+                utils_abort();
+            }
+        }
+        if(c_initCond == INITCOND_PERIODIC || c_nodeX > 0) {
+            sendWest  = (char*)malloc(boundarySizeY);
+            recvWest  = (char*)malloc(boundarySizeY);
+            if(sendWest == NULL || recvWest == NULL) {
+                printf("comm.cpp: Memory allocation failed.\n");
+                utils_abort();
+            }
         }
     }
     
@@ -81,28 +100,44 @@ void Solver::communicateBoundaries()
     getInnerBoundaries(sendNorth, sendSouth, sendEast, sendWest);
     
     
-    // Send
+    // Send/recv data north.
+    if(c_initCond == INITCOND_PERIODIC || c_nodeY < c_numNodesY - 1) {
         MPI_Isend(sendNorth, boundarySizeX, MPI_CHAR, mpiIndex('y', c_nodeY + 1),
-                     sendNorthTag, MPI_COMM_WORLD, &mpiRequest[0]);
+                     sendNorthTag, MPI_COMM_WORLD, &mpiRequest[requestCount]);
+        MPI_Irecv(recvNorth, boundarySizeX, MPI_CHAR, mpiIndex('y', c_nodeY + 1),
+                         recvNorthTag, MPI_COMM_WORLD, &mpiRequest[requestCount + 1]);
+        requestCount += 2;
+    }
+
+    // Send/recv data south.
+    if(c_initCond == INITCOND_PERIODIC || c_nodeY > 0) {
         MPI_Isend(sendSouth, boundarySizeX, MPI_CHAR, mpiIndex('y', c_nodeY - 1),
-                     sendSouthTag, MPI_COMM_WORLD, &mpiRequest[1]);
+                     sendSouthTag, MPI_COMM_WORLD, &mpiRequest[requestCount]);
+        MPI_Irecv(recvSouth, boundarySizeX, MPI_CHAR, mpiIndex('y', c_nodeY - 1),
+                         recvSouthTag, MPI_COMM_WORLD, &mpiRequest[requestCount + 1]);
+        requestCount += 2;
+    }
+
+    // Send/recv data east.
+    if(c_initCond == INITCOND_PERIODIC || c_nodeX < c_numNodesX - 1) {
         MPI_Isend(sendEast, boundarySizeY, MPI_CHAR, mpiIndex('x', c_nodeX + 1), 
-                     sendEastTag, MPI_COMM_WORLD, &mpiRequest[2]);
+                     sendEastTag, MPI_COMM_WORLD, &mpiRequest[requestCount]);
+        MPI_Irecv(recvEast, boundarySizeY, MPI_CHAR, mpiIndex('x', c_nodeX + 1),
+                         recvEastTag,MPI_COMM_WORLD, &mpiRequest[requestCount + 1]);
+        requestCount += 2;
+    }
+
+    // Send/recv data west.
+    if(c_initCond == INITCOND_PERIODIC || c_nodeX > 0) {
         MPI_Isend(sendWest, boundarySizeY, MPI_CHAR, mpiIndex('x', c_nodeX - 1), 
-                     sendWestTag, MPI_COMM_WORLD, &mpiRequest[3]);
-    
-    // Receive
-    MPI_Irecv(recvNorth, boundarySizeX, MPI_CHAR, mpiIndex('y', c_nodeY + 1),
-                     recvNorthTag, MPI_COMM_WORLD, &mpiRequest[4]);
-    MPI_Irecv(recvSouth, boundarySizeX, MPI_CHAR, mpiIndex('y', c_nodeY - 1),
-                     recvSouthTag, MPI_COMM_WORLD, &mpiRequest[5]);
-    MPI_Irecv(recvEast, boundarySizeY, MPI_CHAR, mpiIndex('x', c_nodeX + 1),
-                     recvEastTag,MPI_COMM_WORLD, &mpiRequest[6]);
-    MPI_Irecv(recvWest, boundarySizeY, MPI_CHAR, mpiIndex('x', c_nodeX - 1),
-                     recvWestTag, MPI_COMM_WORLD, &mpiRequest[7]);
+                     sendWestTag, MPI_COMM_WORLD, &mpiRequest[requestCount]);
+        MPI_Irecv(recvWest, boundarySizeY, MPI_CHAR, mpiIndex('x', c_nodeX - 1),
+                         recvWestTag, MPI_COMM_WORLD, &mpiRequest[requestCount + 1]);
+        requestCount += 2;
+    }
     
     // Wait for Send/Recv
-    mpiError = MPI_Waitall(8, mpiRequest, MPI_STATUSES_IGNORE);
+    mpiError = MPI_Waitall(requestCount, mpiRequest, MPI_STATUSES_IGNORE);
     if(mpiError != MPI_SUCCESS) {
         printf("comm.cpp: MPI Error %d.\n", mpiError);
         utils_abort();
