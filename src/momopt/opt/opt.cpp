@@ -158,6 +158,7 @@ void optScaled(int nm, int nm2, int nq, double *u, double *alpha, double *w, dou
     double *h = (double*)malloc(nm * nm * sizeof(double));
     double *uOriginal = (double*)malloc(nm * sizeof(double));
     double *alpha0 = (double*)malloc(nm * sizeof(double));
+    double u0;
     
     int maxIter = options->maxIter;
     double tolRel = options->tolRel;
@@ -300,6 +301,14 @@ void optScaled(int nm, int nm2, int nq, double *u, double *alpha, double *w, dou
         if(err <= rtol && gamma <= tolGamma)
         {
             // problem solved!
+            if(options->momentType == MOMENT_TYPE_MN) {
+                u0 = u[0] + alpha[0];
+                for(int i = 0; i < nm; i++) {
+                    u[i] += alpha[i];
+                    u[i] /= u0;
+                }
+            }
+
             break;
         }
         else if(err <= rtol && gamma > tolGamma)
