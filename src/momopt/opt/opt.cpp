@@ -302,9 +302,9 @@ void optScaled(int nm, int nm2, int nq, double *u, double *alpha, double *w, dou
         {
             // problem solved!
             if(options->momentType == MOMENT_TYPE_MN) {
-                u0 = u[0] + alpha[0];
+                u0 = u[0] - g[0];
                 for(int i = 0; i < nm; i++) {
-                    u[i] += alpha[i];
+                    u[i] -= g[i];
                     u[i] /= u0;
                 }
             }
