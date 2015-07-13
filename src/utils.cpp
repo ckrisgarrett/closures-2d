@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <gsl/gsl_integration.h>
+#include "lib/sphere_lebedev_rule.h"
 
 #ifdef USE_MPI
 #include <mpi.h>
@@ -59,4 +60,24 @@ void utils_getGaussianWeightsAndNodes(int n, double *w, double *mu)
         gsl_integration_glfixed_point(-1, 1, i, &mu[i], &w[i], table);
 }
 
+void utils_getLebedevWeightsAndNodes(int numPoints, double *x, double *y, double *w)
+{
+    double *z = (double *)malloc(numPoints * sizeof(double));
+    ld_by_order(numPoints, x, y, z, w);
+    free(z);
+}
+
+int utils_numLebedevQuadPoints(int rule_number) {
+    if(rule_number < 1 || rule_number > 65) {
+        printf("Choose 0 < QUAD_ORDER < 66\n");
+        utils_abort();
+    }
+    if(available_table(rule_number) == 1) {
+        return order_table(rule_number);
+    } else {
+        printf("Invalid QUAD_ORDER\n");
+        utils_abort();
+        return -1;
+    }
+}
 

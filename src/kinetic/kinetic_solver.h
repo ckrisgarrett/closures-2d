@@ -35,6 +35,8 @@ private:
 
     int c_numQuadPoints;
 
+    int c_useLebedev;
+
     double *c_xi;
     double *c_eta;
     double *c_quadWeights;

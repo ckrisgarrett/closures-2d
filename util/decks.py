@@ -1,9 +1,12 @@
-def kinetic_deck(quad_order=12,
-                 cfl_factor=0.9):
+def kinetic_deck(quad_order=9,
+                 cfl_factor=0.9,
+                 use_lebedev=1):
     return (
 """QUAD_ORDER %d
-CFL_FACTOR %.17f""" % (quad_order,
-                    cfl_factor))
+CFL_FACTOR %.17f
+USE_LEBEDEV %d""" % (quad_order,
+                    cfl_factor,
+                    use_lebedev))
 
 def moment_deck(moment_order=3,
                 quad_order=30,

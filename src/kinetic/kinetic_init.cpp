@@ -43,21 +43,25 @@ double KineticSolver::init(double dx, double dy)
 
     checkInput(c_inputDeckReader.getValue("QUAD_ORDER", &quadOrder), __LINE__);
     checkInput(c_inputDeckReader.getValue("CFL_FACTOR", &cflFactor), __LINE__);
+    checkInput(c_inputDeckReader.getValue("USE_LEBEDEV", &c_useLebedev), __LINE__);
     
+    
+    // The weights and nodes for integration and the angles.
+    double *w = (double*)malloc(quadOrder * sizeof(double));
+    double *mu  = (double*)malloc(quadOrder * sizeof(double));
+    double *phi = (double*)malloc(2 * quadOrder * sizeof(double));
     
     // Maximum value for delta t.
     double maxDt = cflFactor * (2.0 / (2.0 + 2.0)) * (dx * dy) / (dx + dy);
 
 
     // Number of quadrature points.
-    c_numQuadPoints = quadOrder * quadOrder;
+    if(c_useLebedev == 0) {
+        c_numQuadPoints = quadOrder * quadOrder;
+    } else {
+        c_numQuadPoints = utils_numLebedevQuadPoints(quadOrder);
+    }
     c_vectorSize    = c_numQuadPoints;
-    
-    
-    // The weights and nodes for integration and the angles.
-    double *w   = (double*)malloc(quadOrder * sizeof(double));
-    double *mu  = (double*)malloc(quadOrder * sizeof(double));
-    double *phi = (double*)malloc(2 * quadOrder * sizeof(double));
     
     
     // Allocate memory for quadrature.
@@ -87,32 +91,34 @@ double KineticSolver::init(double dx, double dy)
     
     
     // Get quadrature.
-    utils_getGaussianWeightsAndNodes(quadOrder, w, mu);
-
-    
-    // Azimuthal angles of quadrature.
-    for(int k = 0; k < 2 * quadOrder; k++)
-    {
-        phi[k] = (k + 0.5) * M_PI / quadOrder;
-    }
-    
-    
-    // Setup quadrature.
-    // Gaussian quadrature on z-axis.
-    for(int q1 = 0; q1 < quadOrder / 2; q1++)
-    {
-        double wTemp = 2.0 * M_PI / quadOrder * w[q1];
-        for(int q2 = 0; q2 < 2 * quadOrder; q2++)
+    if(c_useLebedev == 0) {
+        utils_getGaussianWeightsAndNodes(quadOrder, w, mu);
+        // Azimuthal angles of quadrature.
+        for(int k = 0; k < 2 * quadOrder; k++)
         {
-            double muTemp = mu[q1];
-            double phiTemp = phi[q2];
-            double xiTemp = sqrt(1.0 - muTemp * muTemp) * cos(phiTemp);
-            double etaTemp = sqrt(1.0 - muTemp * muTemp) * sin(phiTemp);
-            int q = 2 * q1 * quadOrder + q2;     // quadrature counter
-            c_quadWeights[q] = wTemp;
-            c_xi[q] = xiTemp;
-            c_eta[q] = etaTemp;
+            phi[k] = (k + 0.5) * M_PI / quadOrder;
         }
+        
+        
+        // Setup quadrature.
+        // Gaussian quadrature on z-axis.
+        for(int q1 = 0; q1 < quadOrder / 2; q1++)
+        {
+            double wTemp = 2.0 * M_PI / quadOrder * w[q1];
+            for(int q2 = 0; q2 < 2 * quadOrder; q2++)
+            {
+                double muTemp = mu[q1];
+                double phiTemp = phi[q2];
+                double xiTemp = sqrt(1.0 - muTemp * muTemp) * cos(phiTemp);
+                double etaTemp = sqrt(1.0 - muTemp * muTemp) * sin(phiTemp);
+                int q = 2 * q1 * quadOrder + q2;     // quadrature counter
+                c_quadWeights[q] = wTemp;
+                c_xi[q] = xiTemp;
+                c_eta[q] = etaTemp;
+            }
+        }
+    } else {
+        utils_getLebedevWeightsAndNodes(c_numQuadPoints, c_xi, c_eta, c_quadWeights);
     }
 
 
