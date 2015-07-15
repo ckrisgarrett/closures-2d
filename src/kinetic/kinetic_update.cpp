@@ -149,11 +149,7 @@ void KineticSolver::update(double dt, double dx, double dy)
                 double w =  c_quadWeights[q];
                 integral += w * f;
             }
-            if(c_useLebedev == 0) {
-                integral = integral * c_sigmaS[I2D(i,j)] / (4 * M_PI);
-            } else {
-                integral = integral * c_sigmaS[I2D(i,j)];
-            }
+            integral = integral * c_sigmaS[I2D(i,j)] / (4 * M_PI);
 
             // Do Euler Step.
             for(int q = 0; q < c_numQuadPoints; q++)
@@ -193,11 +189,7 @@ void KineticSolver::update(double dt, double dx, double dy)
                 double w =  c_quadWeights[q];
                 integral += w * f;
             }
-            if(c_useLebedev == 0) {
-                integral = integral * c_sigmaS[I2D(i,j)] / (4 * M_PI);
-            } else {
-                integral = integral * c_sigmaS[I2D(i,j)];
-            }
+            integral = integral * c_sigmaS[I2D(i,j)] / (4 * M_PI);
 
             // Do Euler Step.
             for(int q = 0; q < c_numQuadPoints; q++)

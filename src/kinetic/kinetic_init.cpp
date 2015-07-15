@@ -118,9 +118,10 @@ double KineticSolver::init(double dx, double dy)
             }
         }
     } else {
-        utils_getLebedevWeightsAndNodes(c_numQuadPoints, c_xi, c_eta, c_quadWeights);
+        utils_getLebedevWeightsAndNodes(c_numQuadPoints, c_quadWeights, c_xi, c_eta);
     }
 
+    test_quadature(c_numQuadPoints, c_quadWeights, c_xi, c_eta);
 
     // Free memory.
     free(w);

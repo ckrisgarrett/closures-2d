@@ -60,11 +60,15 @@ void utils_getGaussianWeightsAndNodes(int n, double *w, double *mu)
         gsl_integration_glfixed_point(-1, 1, i, &mu[i], &w[i], table);
 }
 
-void utils_getLebedevWeightsAndNodes(int numPoints, double *x, double *y, double *w)
+void utils_getLebedevWeightsAndNodes(int numPoints, double *w, double *x, double *y)
 {
     double *z = (double *)malloc(numPoints * sizeof(double));
     ld_by_order(numPoints, x, y, z, w);
     free(z);
+
+    for(int i = 0; i < numPoints; i++) {
+        w[i] *= 4 * M_PI;
+    }
 }
 
 int utils_numLebedevQuadPoints(int rule_number) {
@@ -79,5 +83,27 @@ int utils_numLebedevQuadPoints(int rule_number) {
         utils_abort();
         return -1;
     }
+}
+
+void test_quadature(int numPoints, double *w, double *x, double *y) {
+    printf("Testing quadrature\n");
+
+    double integral = 0.0;
+    for(int i = 0; i < numPoints; i++) {
+        integral += w[i];
+    }
+    printf("<1> = %f\t\terror %f\n", integral, fabs(integral - 4 * M_PI));
+
+    integral = 0.0;
+    for(int i = 0; i < numPoints; i++) {
+        integral += w[i] * x[i];
+    }
+    printf("<x> = %f\t\terror %f\n", integral, fabs(integral));
+
+    integral = 0.0;
+    for(int i = 0; i < numPoints; i++) {
+        integral += w[i] * x[i] * x[i];
+    }
+    printf("<x^2> = %f\terror %f\n", integral, fabs(integral - 4 * M_PI / 3));
 }
 

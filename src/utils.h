@@ -20,6 +20,7 @@ double utils_norm1(int n, double *A);
 void utils_getGaussianWeightsAndNodes(int n, double *w, double *mu);
 void utils_getLebedevWeightsAndNodes(int numPoints, double*, double*, double*);
 int utils_numLebedevQuadPoints(int);
+void test_quadature(int, double*, double*, double*);
 
 // Blas and lapack routine names.
 extern "C"
