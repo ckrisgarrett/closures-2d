@@ -301,7 +301,7 @@ void MomOptSolver::update(double dt, double dx, double dy)
     communicateBoundaries();
     solveOptimization();
     solveFlux(c_moments, c_flux, c_alpha, dx, dy);
-
+    
     for(int i = c_gX[1]; i <= c_gX[2]; i++)
     {
         for(int j = c_gY[1]; j <= c_gY[2]; j++)
@@ -313,12 +313,12 @@ void MomOptSolver::update(double dt, double dx, double dy)
             {
                 c_moments[I3D(i,j,k)] = c_moments[I3D(i,j,k)] * 
                     (1.0 - dt * c_sigmaT[I2D(i,j)]) - dt * c_flux[I3D(i,j,k)];
-                if(c_initCond == 1) {
-                    double x_i = c_initX + (i-c_gX[1]) * dx;
-                    double y_j = c_initY + (j-c_gY[1]) * dy;
-                    if(fabs(x_i) < 0.5 && fabs(y_j) < 0.5) {
-                        c_moments[I3D(i,j,0)] = c_moments[I3D(i,j,0)] + dt * 2.0 * sqrt(M_PI);
-                    }
+            }
+            if(c_initCond == 1) {
+                double x_i = c_initX + (i-c_gX[1]) * dx;
+                double y_j = c_initY + (j-c_gY[1]) * dy;
+                if(fabs(x_i) < 0.5 && fabs(y_j) < 0.5) {
+                    c_moments[I3D(i,j,0)] = c_moments[I3D(i,j,0)] + dt * 2.0 * sqrt(M_PI);
                 }
             }
         }
@@ -341,12 +341,12 @@ void MomOptSolver::update(double dt, double dx, double dy)
             {
                 c_moments[I3D(i,j,k)] = c_moments[I3D(i,j,k)] * 
                     (1.0 - dt * c_sigmaT[I2D(i,j)]) - dt * c_flux[I3D(i,j,k)];
-                if(c_initCond == 1) {
-                    double x_i = c_initX + (i-c_gX[1]) * dx;
-                    double y_j = c_initY + (j-c_gY[1]) * dy;
-                    if(fabs(x_i) < 0.5 && fabs(y_j) < 0.5) {
-                        c_moments[I3D(i,j,0)] = c_moments[I3D(i,j,0)] + dt * 2.0 * sqrt(M_PI);
-                    }
+            }
+            if(c_initCond == 1) {
+                double x_i = c_initX + (i-c_gX[1]) * dx;
+                double y_j = c_initY + (j-c_gY[1]) * dy;
+                if(fabs(x_i) < 0.5 && fabs(y_j) < 0.5) {
+                    c_moments[I3D(i,j,0)] = c_moments[I3D(i,j,0)] + dt * 2.0 * sqrt(M_PI);
                 }
             }
         }
