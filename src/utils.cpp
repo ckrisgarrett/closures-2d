@@ -60,15 +60,43 @@ void utils_getGaussianWeightsAndNodes(int n, double *w, double *mu)
         gsl_integration_glfixed_point(-1, 1, i, &mu[i], &w[i], table);
 }
 
-void utils_getLebedevWeightsAndNodes(int numPoints, double *w, double *x, double *y)
+int utils_getLebedevWeightsAndNodes(int numPoints, double *w, double *x, double *y)
 {
-    double *z = (double *)malloc(numPoints * sizeof(double));
-    ld_by_order(numPoints, x, y, z, w);
-    free(z);
+    int actual_points = 0;
+
+    double *wTemp = (double *)malloc(numPoints * sizeof(double));
+    double *xTemp = (double *)malloc(numPoints * sizeof(double));
+    double *yTemp = (double *)malloc(numPoints * sizeof(double));
+    double *zTemp = (double *)malloc(numPoints * sizeof(double));
+    ld_by_order(numPoints, xTemp, yTemp, zTemp, wTemp);
 
     for(int i = 0; i < numPoints; i++) {
-        w[i] *= 4 * M_PI;
+        if(wTemp[i] < 0.0) {
+            printf("negative quadrature weight at (%f,%f)\n", x[i], y[i]);
+            printf("try a different quadrature\n");
+            utils_abort();
+        }
+
+        if(zTemp[i] > 0.0) {
+            x[actual_points] = xTemp[i];
+            y[actual_points] = yTemp[i];
+            w[actual_points] = wTemp[i] * 8 * M_PI;
+
+            actual_points++;
+        } else if(zTemp[i] == 0.0) {
+            x[actual_points] = xTemp[i];
+            y[actual_points] = yTemp[i];
+            w[actual_points] = wTemp[i] * 4 * M_PI;
+
+            actual_points++;
+        }
     }
+
+    free(wTemp);
+    free(xTemp);
+    free(yTemp);
+    free(zTemp);
+    return actual_points;
 }
 
 int utils_numLebedevQuadPoints(int rule_number) {
@@ -86,7 +114,7 @@ int utils_numLebedevQuadPoints(int rule_number) {
 }
 
 void test_quadature(int numPoints, double *w, double *x, double *y) {
-    printf("Testing quadrature\n");
+    printf("Testing %d point quadrature\n", numPoints);
 
     double integral = 0.0;
     for(int i = 0; i < numPoints; i++) {

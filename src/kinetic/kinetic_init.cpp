@@ -61,34 +61,12 @@ double KineticSolver::init(double dx, double dy)
     } else {
         c_numQuadPoints = utils_numLebedevQuadPoints(quadOrder);
     }
-    c_vectorSize    = c_numQuadPoints;
     
     
     // Allocate memory for quadrature.
     c_quadWeights = (double*)malloc(c_numQuadPoints * sizeof(double));
     c_xi = (double*)malloc(c_numQuadPoints * sizeof(double));
     c_eta = (double*)malloc(c_numQuadPoints * sizeof(double));
-    
-    
-    // Allocate memory for grid cells.
-    int numXCells = 2 * NUM_GHOST_CELLS + c_sizeX;
-    int numYCells = 2 * NUM_GHOST_CELLS + c_sizeY;
-    c_kinetic = (double*)malloc(numXCells * numYCells * c_numQuadPoints * sizeof(double));
-    c_flux    = (double*)malloc(numXCells * numYCells * c_numQuadPoints * sizeof(double));
-    
-    
-    // Initial conditions
-    for(int i = c_gX[0]; i <= c_gX[3]; i++)
-    {
-        for(int j = c_gY[0]; j <= c_gY[3]; j++)
-        {
-            for(int q = 0; q < c_numQuadPoints; q++)
-            {
-                c_kinetic[I3D(i,j,q)] = c_initialGrid[I2D(i,j)];
-            }
-        }
-    }
-    
     
     // Get quadrature.
     if(c_useLebedev == 0) {
@@ -118,10 +96,30 @@ double KineticSolver::init(double dx, double dy)
             }
         }
     } else {
-        utils_getLebedevWeightsAndNodes(c_numQuadPoints, c_quadWeights, c_xi, c_eta);
+        c_numQuadPoints = utils_getLebedevWeightsAndNodes(c_numQuadPoints, c_quadWeights, c_xi, c_eta);
     }
+    c_vectorSize = c_numQuadPoints;
 
     test_quadature(c_numQuadPoints, c_quadWeights, c_xi, c_eta);
+    
+    // Allocate memory for grid cells.
+    int numXCells = 2 * NUM_GHOST_CELLS + c_sizeX;
+    int numYCells = 2 * NUM_GHOST_CELLS + c_sizeY;
+    c_kinetic = (double*)malloc(numXCells * numYCells * c_numQuadPoints * sizeof(double));
+    c_flux    = (double*)malloc(numXCells * numYCells * c_numQuadPoints * sizeof(double));
+    
+    
+    // Initial conditions
+    for(int i = c_gX[0]; i <= c_gX[3]; i++)
+    {
+        for(int j = c_gY[0]; j <= c_gY[3]; j++)
+        {
+            for(int q = 0; q < c_numQuadPoints; q++)
+            {
+                c_kinetic[I3D(i,j,q)] = c_initialGrid[I2D(i,j)];
+            }
+        }
+    }
 
     // Free memory.
     free(w);
