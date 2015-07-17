@@ -230,23 +230,7 @@ void optScaled(int nm, int nm2, int nq, double *u, double *alpha, double *w, dou
         free(work);
         free(iwork);
         condest = 1.0 / condest;
-
-
-        // Initialize to isotropic alpha if H is too bad on first iteration.
-//        if(totalIter == 1 && (error != 0 || condest > condHMax))
-//        {
-//            isotropicAlpha(nm, alpha0, options->momentType, options->deltaPPn);
-//            
-//            // Reset Variables.
-//            rtol = dnrm2_(&nm, u, &inc1) * tolRel;
-//            memcpy(alpha, alpha0, nm * sizeof(double));
-//            iter = 0;
-//            iterGamma = 0;
-//            t = 1;
-//            
-//            continue;
-//        }
-
+        
         
         // Regularize criteria.
         if(iter >= maxIter || error != 0 || t == 0 || condest > condHMax)
@@ -265,15 +249,11 @@ void optScaled(int nm, int nm2, int nq, double *u, double *alpha, double *w, dou
             {
                 // This should never happen.
                 printf("Max regularization achieved.\n");
-                printf("%d: %d: %e: %e\n", iter, error, t, condest);
                 utils_abort();
             }
             
-            // TEST CODE
-            isotropicAlpha(nm, alpha0, options->momentType, options->deltaPPn);
-            // TEST CODE
-            
             // Reset variables.
+            isotropicAlpha(nm, alpha0, options->momentType, options->deltaPPn);
             rtol = dnrm2_(&nm, u, &inc1) * tolRel;
             memcpy(alpha, alpha0, nm * sizeof(double));
             iterGamma = 0;
