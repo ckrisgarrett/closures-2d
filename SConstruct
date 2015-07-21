@@ -32,6 +32,8 @@ src_files = ["main.cpp",
              "dn/dn_update.cpp"]
 
 
+AddOption("--papi", action="store_true")
+
 AddOption("--omp", action="store_true")
 AddOption("--mpi", action="store_true")
 AddOption("--cuda", action="store_true")
@@ -40,6 +42,9 @@ AddOption("--all", action="store_true")
 
 cxx = Environment(CXX=config.cxx_compiler, CCFLAGS=config.cxx_flags,
     LIBS=config.cpu_libs, LIBPATH=config.library_paths, CPPPATH=config.include_paths)
+
+if GetOption("papi"):
+    cxx.AppendUnique(LIBS=["papi"], CPPDEFINES=["USE_PAPI"])
 
 if GetOption("mpi") or GetOption("all"):
     mpic = cxx.Clone(CXX=config.mpi_compiler)

@@ -23,6 +23,10 @@
 #include <omp.h>
 #endif
 
+#ifdef USE_PAPI
+#include <papi.h>
+#endif
+
 /*
     Checks the status of input parameters.
 */
@@ -58,6 +62,36 @@ int main(int argc, char **argv)
     MPI_Comm_size(MPI_COMM_WORLD, &numNodes);
     #endif
     
+
+    #ifdef USE_PAPI
+    const PAPI_hw_info_t *hwinfo = NULL;
+    float rtime;
+    float ptime;
+    long long flpops;
+    float mflops;
+    long long ins;
+    float ipc;
+
+    if(PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
+        printf("Couldn't initialize PAPI\n");
+        utils_abort();
+    }
+
+    if((hwinfo = PAPI_get_hardware_info()) == NULL) {
+        printf("Couldn't get hardware info via PAPI\n");
+        utils_abort();
+    } else {
+        if(node == 0) {
+            printf("CPUs (this node): %d\n", hwinfo->ncpu);
+            printf("Nodes: %d\n", hwinfo->nnodes);
+            printf("Total CPUs: %d\n", hwinfo->totalcpus);
+            printf("Vendor: %s (%d)\n", hwinfo->vendor_string, hwinfo->vendor);
+            printf("Model: %s (%d)\n", hwinfo->model_string, hwinfo->model);
+            printf("Revision: %f\n", hwinfo->revision);
+            printf("Estimated clock rate (MHz): %f\n", hwinfo->mhz);
+        }
+    }
+    #endif
 
     // Read input.deck
     inputDeckReader.readInputDeck("input.deck");
@@ -191,6 +225,12 @@ int main(int argc, char **argv)
     double t = 0;
     double dt = max_dt;
     solver->outputData(t);
+
+    #ifdef USE_PAPI
+    PAPI_flops(&rtime, &ptime, &flpops, &mflops);
+    PAPI_ipc(&rtime, &ptime, &ins, &ipc);
+    #endif
+
     for(double tOut = MIN(t + outDeltaT, tFinal); tOut <= tFinal; 
         tOut = MIN(tOut + outDeltaT, tFinal))
     {
@@ -215,8 +255,26 @@ int main(int argc, char **argv)
             break;
     }
 
+    #ifdef USE_PAPI
+    if(PAPI_flops(&rtime, &ptime, &flpops, &mflops) == PAPI_OK) {
+        if(node == 0) {
+            printf("realtime: %f\n", rtime);
+            printf("process time: %f\n", ptime);
+            printf("total flop count: %lld\n", flpops);
+            printf("Mflop/s: %f\n", mflops);
+        }
+    }
+    if(PAPI_ipc(&rtime, &ptime, &ins, &ipc) == PAPI_OK) {
+        if(node == 0) {
+            printf("realtime: %f\n", rtime);
+            printf("process time: %f\n", ptime);
+            printf("total instructions: %lld\n", ins);
+            printf("instructions/cycle: %f\n", ipc);
+        }
+    }
+    #endif
+
     
-    // Print time taken by the program.
     #ifdef USE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
     #endif
