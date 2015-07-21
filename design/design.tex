@@ -9,6 +9,7 @@
 \usepackage[section]{placeins}
 \usepackage{nth}
 \usepackage{xspace}
+\usepackage{hyperref}
 
 \newcommand{\main}{\texttt{main.cpp}\xspace}
 \newcommand{\comm}{\texttt{comm.cpp}\xspace}
@@ -18,7 +19,6 @@
 \newcommand{\kineticdeck}{\texttt{kinetic.deck}\xspace}
 \newcommand{\floor}{\ensuremath{\mathtt{c\_floor}}\xspace}
 \newcommand{\quadorder}{\ensuremath{\mathtt{quadOrder}}\xspace}
-\newcommand{\momopt}{\texttt{momopt}\xspace}
 \newcommand{\dn}{\texttt{dn}\xspace}
 \newcommand{\integer}{\texttt{int}\xspace}
 \newcommand{\bool}{\texttt{bool}\xspace}
@@ -34,6 +34,8 @@
 \DeclareMathOperator{\minmod}{minmod}
 \DeclareMathOperator{\slopefit}{slopefit}
 \DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
 
 \newcommand{\integral}[1]{\ensuremath{\langle #1 \rangle}}
 \newcommand{\closure}[1]{\ensuremath{\mathcal{E}(#1)}}
@@ -41,12 +43,15 @@
 \newcommand{\threespace}{\ensuremath{\mathbb{R}^3}\xspace}
 \newcommand{\kinetic}{\texttt{kinetic}\xspace}
 \newcommand{\moment}{\texttt{moment}\xspace}
+\newcommand{\momopt}{\texttt{momopt}\xspace}
 
 \frenchspacing
 \raggedright
 
+\AtBeginDocument{\let\textlabel\label}
+
 \title{Design Document}
-\author{C. Kristopher Garrett, Timothy Shaffer}
+\author{C. Kristopher Garrett, Tim Shaffer}
 
 \begin{document}
 \maketitle
@@ -67,7 +72,8 @@ is the direction of travel, $\sigma = \sigma(x)$ is the scattering cross section
 
 The \kinetic solver directly computes solutions to
 Equation~\ref{eqn:kinetic}, while the \moment solver calculates solutions based on
-the spherical harmonic basis functions. This program explicitly computes approximate
+the spherical harmonic basis functions. The \momopt solver includes additional
+optimizations and experimental features. This program explicitly computes approximate
 solutions to Equation~\ref{eqn:kinetic} as
 the system evolves from one of several initial conditions, defined in
 Section~\ref{sec:initcond}.
@@ -80,7 +86,8 @@ is placed with its peak at the center of the grid. The $\sigma$ value is provide
 a configuration option to the program. The limiting case, when $\sigma=0$, is the
 Delta initial condition. For this condition, the centermost cell is set to
 $\frac{1}{\Delta x \Delta y}$ where $\Delta x$ and $\Delta y$ are the cell
-dimensions. The Lattice initial condition corresponds to a checker board pattern of highly scattering and highly absorbing regions. This configuration is reminiscent of a
+dimensions. The Lattice initial condition corresponds to a checker board pattern
+of highly scattering and highly absorbing regions. This configuration is reminiscent of a
 small section of a nuclear reactor core. The Lattice initial condition leaves the
 grid initially empty, but has the most complicated scattering pattern of the initial
 conditions. The Smooth initial condition is primarily intended for testing convergence.
@@ -92,7 +99,8 @@ This configuration initializes the grid points with a periodic boundary given by
 \section{\kinetic Solver}
 The \kinetic solver is an implementation of the discrete ordinates method, also known
 as $\mathrm{S}_N$.
-This method uses Gauss-Legendre quadrature sets on the unit sphere. Let
+This method uses Gauss-Legendre quadrature sets on the unit sphere. A Lebedev
+quadrature is also implemented, but is considered experimental. Let
 $\{\Omega_1, \dots, \Omega_Q\} \in \twosphere$ be be a set of nodes with
 corresponding weights $\{w_1, \dots, w_Q\}$. Then from Equation~\ref{eqn:kinetic}
 \begin{equation}
@@ -103,9 +111,11 @@ where $f_q(x,t) \approx f(x, \Omega_q, t)$ for $q = 1, \dots, Q$.
 
 This implementation uses Heun's method to achieve second order convergence. Edge values
 are computed via upwinding. For approximate slopes, the double minmod limiter is used.
+
 \section{\moment Solver}
-The \moment solver uses spectral methods with Equation~\ref{eqn:kinetic}. The real
-spherical harmonics serve as an orthonormal basis for $L^2$. Let
+The \moment solver uses standard spectral methods with Equation~\ref{eqn:kinetic}. The real
+spherical harmonics serve as an orthonormal basis of $L^2$ with respect to
+\twosphere for the expansion of the moments. Let
 $\mathbf{m}(\Omega) =
 (Y_{0,0}, Y_{1,-1}, Y_{1,0}, Y_{1,1}, \dots, Y_{N,-N}, \dots, Y_{N,N})^T$
 be a vector of spherical harmonics up to and including degree $N$. The the moments
@@ -136,8 +146,11 @@ It is only necessary to use the spherical harmonics $Y_{\ell,m}$ such that
 $\ell + m$ is even.
 
 Various filters can also be applied to suppress oscillations in spherical harmonics.
-These filters scale the moments on each time step. 
+These filters use a scale factor on each cell and timestep to compute a
+perturbed differential equation with minimal added computation.
+
 \subsection{Hauck Filter}
+The Hauck filter is described in (insert citation).
 Let $N$ be the moment order and $\omega$ be the filter tune, and define
 \begin{equation}
     \alpha = \frac{\omega}{N^2 (\sigma_T L + N)^2}.
@@ -149,6 +162,7 @@ Scale each moment by
 for the $n$\textsuperscript{th} moment.
 
 \subsection{Sspline Filter}
+The Spline filter is given in (insert citation).
 With moment order $N$ and filter tune $\sigma_e$, let
 \begin{equation}
     s = \frac{-\sigma_e \Delta t}{\log F(N/(N+1))}
@@ -159,6 +173,7 @@ where $F(x) = 1/(1 + x^4)$. The scale factor is given by
 \end{equation}
 
 \subsection{Lanczos Filter}
+The Lanczos filter is taken from (insert citation).
 Again with moment order $N$ and filter tune $\sigma_e$, let
 \begin{equation}
     s = \frac{-\sigma_e \Delta t}{\log L(N / (N+1))}
@@ -175,29 +190,99 @@ Now the moment scale factor is
     L(n / (N+1))^s.
 \end{equation}
 
-\begin{itemize}
-\item Write Kinetic Equation
-\item Write Initial Conditions
-\item Write Approximations/Solvers
-\end{itemize}
+\section{\momopt Solver}
+One serious drawback of the \moment solver is the possibility of non-realizable
+solutions with negative densities, oscillatory approximations of nonsmooth
+solutions. Nonlinear approaches can ensure positivity,
+but come with increased complexity and computational cost. In general,
+entropy-based moment closures, like the \momopt solver, can be cast in the
+framework of the following minimization problem
+\begin{equation}
+    \label{eqn:entropy}
+    \mathcal{E}(\mathbf{u}) = \argmin_{g \in L^1} \integral{\eta(g)} \quad
+    \textnormal{subject to} \quad \integral{\mathbf{m}g} = \mathbf{u}
+\end{equation}
+where $\eta$ is a smooth, strictly convex, coercive\footnote{We define a
+function $\eta$ to be coercive if
+$\lim_{r \to \infty} \frac{\eta(r)}{|r|} = \infty$} function. For the
+\momopt solver, $\eta(\mathbf{r}) = \mathbf{r} \log \mathbf{r} - \mathbf{r}$
+and its Legendre dual\footnote{The Legendre dual of $\eta$ is given by
+$\eta_*(s) = rs - \eta(r)$ where $s = \eta'(r)$. By differentiating this
+relation, one can show that $r = \eta'_*(s)$. Thus $\eta'$ and $\eta'_*$ are
+inverses of each other.} $\eta*(\mathbf{s}) = \mathbf{e^s}$.
+
+The solution to Equation~\ref{eqn:entropy}, if it exists, is given by
+\begin{equation}
+    \mathcal{E}(\mathbf{u}) = \eta'_*(\hat{\mathbf{\alpha}}(\mathbf{u})^T \mathbf{m})
+\end{equation}
+where $\eta_*$ is the Legendre dual of $\eta$ and $\hat{\mathbf{\alpha}}(\mathbf{u})$
+solves the dual problem
+\begin{equation}
+    \hat{\mathbf{\alpha}}(\mathbf{u}) = \argmin_{\mathbf{\alpha} \in \R^n}
+    \left\{ \integral{\eta_*(\mathbf{\alpha}^T\mathbf{m})} -
+    \mathbf{\alpha}^T \mathbf{u} \right\}
+\end{equation}
 
 
 \section{Installation}
-TBD
+This software is built using \href{http://scons.org/}{SCons}. If SCons is not
+installed, a copy has been included in the \texttt{build/} directory.
+If Python~2.x is installed but not SCons, replace \texttt{scons} with
+\texttt{python build/scons.py}.
 
-\section{Source Files}
-\label{src}
-\subsection{\main}
-\label{src:main.cpp}
-For this, I don't think we need this much info.
-Just put something like
+To build this software using default options, simply run \[\texttt{scons}\]
+in the
+project directory. SCons will use default compilation options to build
+\texttt{solver\_serial}. If acceleration is desired, it should be provided as
+arguments to SCons, e.g. \[\texttt{scons --omp}\] builds \texttt{solver\_omp}.
+Supported options are
+\texttt{--omp}, \texttt{--mpi}, and \texttt{--cuda}. If multiple acceleration
+options are provided, an optimized executable will be build for each.
+In addition, it is possible to build executables with multiple types of
+acceleration. Simply give the names of the desired optimizations in the order
+MPI, OMP, CUDA, e.g. \[\texttt{scons --omp --mpi solver\_mpiomp}\]
+
+To successfully build and run, this software requires
 \begin{itemize}
-\item \texttt{main.cpp} -- Entry point of program
-\item \texttt{comm.cpp} -- Controls MPI communication
-\item etc...
+ \item GSL
+ \item BLAS
+ \item LAPACK
+ \item OpenMP (optional, provided by many compilers)
+ \item Open MPI (optional)
+ \item CUDA development files (optional)
+\end{itemize}
+If these libraries and header files are not in the system's default locations,
+additional search paths can be provided in \texttt{config.py}. This file also
+includes options for controlling the compiler that SCons uses.
+
+All options controlling the runtime operation of the program reside in
+\texttt{input.deck}. Comments prefixed with \texttt{\#} are allowed,
+and options not used by the selected solver are ignored. Available options are
+listed in Section~\ref{sec:options}, and example options for the various
+solvers are included in the \texttt{examples/} directory.
+The outputs are binary files with
+extensions \texttt{.sn}, \texttt{.pn}, and \texttt{.opt}, depending on
+the solver. Python code for reading and working with these files is provided
+in \texttt{util/formats.py}.
+
+The common functionality is split up among the files in \texttt{src/}.
+\begin{itemize}
+ \item \texttt{main.cpp} -- Entry point of program
+ \item \texttt{comm.cpp} -- Controls MPI communication
+ \item \texttt{utils.cpp} -- Helper functions used throughout the code
+ \end{itemize}
+The solver code has an approximately common layout, e.g. in \texttt{src/moment/}
+\begin{itemize}
+ \item \texttt{moment\_init.cpp} -- Read config, set up quadrature and filters, etc.
+ \item \texttt{moment\_boundaries.cpp} -- Communicate boundary data with other nodes
+ \item \texttt{moment\_update.cpp} -- Solve flux, update the grid with time, etc.
+ \item \texttt{moment\_output.cpp} -- Write out results
 \end{itemize}
 
 
+\section{Implementation Details}
+\subsection{\main}
+\label{src:main.cpp}
 The main entry point for the program, \main, is responsible for reading the input
 files dictating runtime behavior, setting up MPI, and running the chosen solver.
 In addition, the grid initialization used by all solvers is defined here, so \main
