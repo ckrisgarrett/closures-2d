@@ -65,8 +65,6 @@ private:
     int c_maxIter;
     int c_maxIterBfgs;
     double c_theta;
-    int c_numCudaCards;
-    int c_numThreadsPerCudaCard;
     
     double *c_spHarm;
     double *c_quadWeights;

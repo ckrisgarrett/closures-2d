@@ -12,10 +12,6 @@
 #include <omp.h>
 #endif
 
-#ifdef USE_CUDA_FOBJ
-#include "fobj_cuda.h"
-#endif
-
 
 HStruct *g_hStruct;     // Global variable for Clebsch-Gordan coefficients.
 static double *gExtendedForAllThreads;
@@ -243,20 +239,6 @@ double fobjMn(int nm, int np2, int nq, double *alpha, double *u, double *w, doub
     double f = 0;
     
     
-    // Use CUDA.
-    #ifdef USE_CUDA_FOBJ
-    int threadId = 0;
-    #ifdef USE_OPENMP
-    threadId = omp_get_thread_num();
-    #endif
-    
-    if(h != NULL && fobjUseCuda(threadId) == 1)
-    {
-        return fobjMnCuda(nm, nq, alpha, u, p, threadId, g, h);
-    }
-    #endif
-    
-    
     // If H != NULL, then get all the information for f and g from H.
     if(h != NULL)
     {
@@ -342,23 +324,6 @@ double fobjMn(int nm, int np2, int nq, double *alpha, double *u, double *w, doub
 double fobjPPn(int nm, int np2, int nq, double *alpha, double *u, double *w, double *p, double delta, 
                double *g, double *h, bool useClebschGordan)
 {
-    // Use CUDA.
-    #ifdef USE_CUDA_FOBJ
-    
-    // Get OpenMP thread index.
-    int threadId = 0;
-    #ifdef USE_OPENMP
-    threadId = omp_get_thread_num();
-    #endif
-    
-    if(h != NULL && fobjUseCuda(threadId) == 1)
-    {
-        return fobjPPnCuda(nm, nq, alpha, u, w, p, delta, threadId, g, h);
-    }
-    #endif
-    
-    
-    // If not using CUDA then solve on CPU.
     double f = 0;
     if(g != NULL)
     {

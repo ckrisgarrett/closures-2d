@@ -6,7 +6,6 @@
 
 
 #include "momopt_solver.h"
-#include "opt/fobj_cuda.h"
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_sf.h>
@@ -20,10 +19,6 @@
 #include "opt/opt.h"
 #include "opt/fobj.h"
 #include <gsl/gsl_linalg.h>
-
-#ifdef USE_CUDA_FLUX
-#include "solve_flux_cuda.h"
-#endif
 
 #ifdef USE_OPENMP
 #include <omp.h>
@@ -71,8 +66,6 @@ double MomOptSolver::init(double dx, double dy)
     checkInput(c_inputDeckReader.getValue("DELTA_PPN", &c_deltaPPn), __LINE__);
     checkInput(c_inputDeckReader.getValue("MOMENT_TYPE", &c_momentType), __LINE__);
     checkInput(c_inputDeckReader.getValue("OPTIMIZATION_TYPE", &c_optType), __LINE__);
-    checkInput(c_inputDeckReader.getValue("NUM_CUDA_CARDS", &c_numCudaCards), __LINE__);
-    checkInput(c_inputDeckReader.getValue("NUM_THREADS_PER_CUDA_CARD", &c_numThreadsPerCudaCard), __LINE__);
     
     
     // Maximum value for delta t.
@@ -276,24 +269,6 @@ double MomOptSolver::init(double dx, double dy)
     initUpdate(c_numMoments);
     initFobj(c_numOmpThreads, c_numManyMoments);
     
-    #ifdef USE_CUDA_FOBJ
-    fobjCudaInitSerial(c_numCudaCards, c_numThreadsPerCudaCard);
-    #pragma omp parallel
-    {
-        int thread = 0;
-        #ifdef USE_OPENMP
-        thread = omp_get_thread_num();
-        #endif
-        fobjCudaInitParallel(c_numMoments, c_numQuadPoints, c_quadWeights, thread);
-    }
-    #endif
-
-    #ifdef USE_CUDA_FLUX
-    solveFluxInit_cuda(c_gX[3]-c_gX[0]+1, c_gY[3]-c_gY[0]+1, 
-                       c_numMoments, c_numManyMoments, c_numQuadPoints, 
-                       c_quadWeights, c_spHarm, c_xi, c_eta);
-    #endif
-
     return maxDt;
 }
 

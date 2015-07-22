@@ -25,8 +25,7 @@ CFL_FACTOR %.17f
 
 def momopt_deck(moment_order=3, quad_order=30, cfl_factor=0.9, tol=1e-4,
         cond_h_max=1e10, cond_h_max_bfgs=20, max_iter=100, max_bgfs_iter=5,
-        use_cg=1, theta=2.0, delta_ppn=1e-10, moment_type="mn", opt_type=0,
-        num_cuda_cards=1, num_threads_pre_cuda_card=2):
+        use_cg=1, theta=2.0, delta_ppn=1e-10, moment_type="mn", opt_type=0):
     momtypenum = {"mn": 0, "ppn": 1}
     return ("""
 MOMENT_ORDER %d
@@ -42,8 +41,6 @@ THETA %.17f
 DELTA_PPN %.17f
 MOMENT_TYPE %d
 OPTIMIZATION_TYPE %d
-NUM_CUDA_CARDS %d
-NUM_THREADS_PER_CUDA_CARD %d
 """ % (moment_order,
        quad_order,
        cfl_factor,
@@ -56,9 +53,7 @@ NUM_THREADS_PER_CUDA_CARD %d
        theta,
        delta_ppn,
        momtypenum[moment_type],
-       opt_type,
-       num_cuda_cards,
-       num_threads_pre_cuda_card))
+       opt_type))
 
 def input_deck(solver="kinetic",
                num_cells_x=50,

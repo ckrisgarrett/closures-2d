@@ -34,23 +34,10 @@ src_files = ["main.cpp",
 
 AddOption("--omp", action="store_true")
 AddOption("--mpi", action="store_true")
-AddOption("--cuda", action="store_true")
-AddOption("--all", action="store_true")
 
 
 cxx = Environment(CXX=config.cxx_compiler, CCFLAGS=config.cxx_flags,
     LIBS=config.cpu_libs, LIBPATH=config.library_paths, CPPPATH=config.include_paths)
-
-if GetOption("mpi") or GetOption("all"):
-    mpic = cxx.Clone(CXX=config.mpi_compiler)
-
-if GetOption("cuda") or GetOption("all"):
-    cudac = Environment()
-    cudac['CUDA_TOOLKIT_PATH'] = config.cuda_toolkit_path
-    cudac['CUDA_SDK_PATH'] = config.cuda_sdk_path
-    cudac['NVCCFLAGS'] = config.nvcc_flags
-    cudac.Tool("cuda")
-    cudac.AppendUnique(LIBS=config.cuda_libs)
 
 
 serial = cxx.Clone()
@@ -60,34 +47,18 @@ debug = cxx.Clone(CCFLAGS=config.cxx_debug_flags)
 profile = cxx.Clone()
 profile.AppendUnique(CCFLAGS=config.cxx_profile_flags)
 
-if GetOption("omp") or GetOption("all"):
+if GetOption("mpi"):
+    mpic = cxx.Clone(CXX=config.mpi_compiler)
+    mpi = mpic.Clone()
+
+if GetOption("omp"):
     omp = cxx.Clone()
     omp.AppendUnique(CCFLAGS=config.omp_compiler_flags,
         LINKFLAGS=config.omp_linker_flags)
 
-if GetOption("mpi") or GetOption("all"):
-    mpi = mpic.Clone()
-
-if GetOption("cuda") or GetOption("all"):
-    cuda = cxx.Clone()
-    cuda.AppendUnique(LIBS=config.cuda_libs)
-
-if (GetOption("mpi") and GetOption("omp")) or GetOption("all"):
+if GetOption("mpi") and GetOption("omp"):
     mpiomp = mpic.Clone()
     mpiomp.AppendUnique(CCFLAGS=config.omp_compiler_flags,
-        LINKFLAGS=config.omp_linker_flags)
-
-if (GetOption("mpi") and GetOption("cuda")) or GetOption("all"):
-    mpicuda = mpic.Clone()
-    mpicuda.AppendUnique(LIBS=config.cuda_libs)
-
-if (GetOption("omp") and GetOption("cuda")) or GetOption("all"):
-    ompcuda = omp.Clone()
-    ompcuda.AppendUnique(LIBS=config.cuda_libs)
-
-if (GetOption("mpi") and GetOption("omp") and GetOption("cuda")) or GetOption("all"):
-    mpiompcuda = mpicuda.Clone()
-    mpiompcuda.AppendUnique(CCFLAGS=config.omp_compiler_flags,
         LINKFLAGS=config.omp_linker_flags)
 
 
@@ -105,7 +76,7 @@ debug.VariantDir("build/debug", "src")
 debug.Program("solver_debug",
     [os.path.join("build/debug", x) for x in src_files])
 
-if GetOption("omp") or GetOption("all"):
+if GetOption("omp"):
     omp.VariantDir("build/omp", "src")
     omp.AppendUnique(CPPDEFINES=["USE_OPENMP"])
     binaries.append(omp.Program("solver_omp",
@@ -113,48 +84,19 @@ if GetOption("omp") or GetOption("all"):
     convergence_binary = binaries[-1]
     Default(binaries[-1])
 
-if GetOption("mpi") or GetOption("all"):
+if GetOption("mpi"):
     mpi.VariantDir("build/mpi", "src")
     mpi.AppendUnique(CPPDEFINES=["USE_MPI"])
     binaries.append(mpi.Program("solver_mpi",
         [os.path.join("build/mpi", x) for x in src_files]))
     Default(binaries[-1])
 
-if GetOption("cuda") or GetOption("all"):
-    cudac.VariantDir("build/cudac", "src")
-    cudac.AppendUnique(CPPDEFINES=["USE_CUDA_FLUX", "USE_CUDA_FOBJ"])
-    fobj_cuda = cudac.Object("build/cudac/momopt/opt/fobj_cuda.cu")
-    flux_cuda = cudac.Object("build/cudac/momopt/solve_flux_cuda.cu")
-
-    cuda.VariantDir("build/cuda", "src")
-    cuda.AppendUnique(CPPDEFINES=["USE_CUDA_FLUX", "USE_CUDA_FOBJ"])
-    binaries.append(cuda.Program("solver_cuda",
-        [os.path.join("build/cuda", x) for x in src_files] + fobj_cuda + flux_cuda))
-    Default(binaries[-1])
-
-if (GetOption("mpi") and GetOption("omp")) or GetOption("all"):
+if GetOption("mpi") and GetOption("omp"):
     mpiomp.VariantDir("build/mpiomp", "src")
     mpiomp.AppendUnique(CPPDEFINES=["USE_OPENMP", "USE_MPI"])
     binaries.append(mpiomp.Program("solver_mpiomp",
         [os.path.join("build/mpiomp", x) for x in src_files]))
-
-if (GetOption("omp") and GetOption("cuda")) or GetOption("all"):
-    ompcuda.VariantDir("build/ompcuda", "src")
-    ompcuda.AppendUnique(CPPDEFINES=["USE_OPENMP", "USE_CUDA_FLUX", "USE_CUDA_FOBJ"])
-    binaries.append(ompcuda.Program("solver_ompcuda",
-        [os.path.join("build/ompcuda", x) for x in src_files] + fobj_cuda + flux_cuda))
-
-if (GetOption("mpi") and GetOption("cuda")) or GetOption("all"):
-    mpicuda.VariantDir("build/mpicuda", "src")
-    mpicuda.AppendUnique(CPPDEFINES=["USE_MPI", "USE_CUDA_FLUX", "USE_CUDA_FOBJ"])
-    binaries.append(mpicuda.Program("solver_mpicuda",
-        [os.path.join("build/mpicuda", x) for x in src_files] + fobj_cuda + flux_cuda))
-
-if (GetOption("mpi") and GetOption("omp") and GetOption("cuda")) or GetOption("all"):
-    mpiompcuda.VariantDir("build/mpiompcuda", "src")
-    mpiompcuda.AppendUnique(CPPDEFINES=["USE_MPI", "USE_OMP", "USE_CUDA_FLUX", "USE_CUDA_FOBJ"])
-    binaries.append(mpiompcuda.Program("solver_mpiompcuda",
-        [os.path.join("build/mpiompcuda", x) for x in src_files] + fobj_cuda + flux_cuda))
+    Default(binaries[-1])
 
 
 tests = Environment()

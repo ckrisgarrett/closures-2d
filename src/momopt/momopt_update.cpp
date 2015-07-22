@@ -12,10 +12,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#ifdef USE_CUDA_FLUX
-#include "solve_flux_cuda.h"
-#endif
-
 
 // Temporary variables.
 static double *ansatzGrid;
@@ -90,14 +86,6 @@ void MomOptSolver::solveFlux(double *moments, double *flux, double *alpha, doubl
     int numGridPoints = numX * numY;
     
     
-    // If using CUDA ...
-    #ifdef USE_CUDA_FLUX
-    // Solve for the flux on the GPU.
-    solveFlux_cuda(numX, numY, c_numMoments, c_numQuadPoints, c_theta, dx, dy, alpha, flux);
-    
-    
-    // If not using CUDA ...
-    #else
     // Zero flux.
     for(int i = c_gX[1]; i <= c_gX[2]; i++)
     {
@@ -190,7 +178,6 @@ void MomOptSolver::solveFlux(double *moments, double *flux, double *alpha, doubl
             }
         }
     }
-    #endif
 }
 
 

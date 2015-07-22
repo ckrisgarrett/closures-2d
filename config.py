@@ -1,6 +1,5 @@
 ###### required libraries ######
 cpu_libs = ["gsl", "gslcblas", "blas", "lapack"]
-cuda_libs = ["cudart"]
 
 ###### additional search paths for CPU libraries ######
 library_paths = []
@@ -19,7 +18,3 @@ omp_linker_flags = ["-fopenmp"]
 ###### MPI Options ######
 mpi_compiler = "mpic++"
 
-###### CUDA Options ######
-nvcc_flags = ["-O3", "-arch=sm_20"]
-cuda_toolkit_path = "/opt/cuda"
-cuda_sdk_path = "/opt/cuda"
