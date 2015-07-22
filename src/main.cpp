@@ -63,36 +63,6 @@ int main(int argc, char **argv)
     #endif
     
 
-    #ifdef USE_PAPI
-    const PAPI_hw_info_t *hwinfo = NULL;
-    float rtime;
-    float ptime;
-    long long flpops;
-    float mflops;
-    long long ins;
-    float ipc;
-
-    if(PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
-        printf("Couldn't initialize PAPI\n");
-        utils_abort();
-    }
-
-    if((hwinfo = PAPI_get_hardware_info()) == NULL) {
-        printf("Couldn't get hardware info via PAPI\n");
-        utils_abort();
-    } else {
-        if(node == 0) {
-            printf("CPUs (this node): %d\n", hwinfo->ncpu);
-            printf("Nodes: %d\n", hwinfo->nnodes);
-            printf("Total CPUs: %d\n", hwinfo->totalcpus);
-            printf("Vendor: %s (%d)\n", hwinfo->vendor_string, hwinfo->vendor);
-            printf("Model: %s (%d)\n", hwinfo->model_string, hwinfo->model);
-            printf("Revision: %f\n", hwinfo->revision);
-            printf("Estimated clock rate (MHz): %f\n", hwinfo->mhz);
-        }
-    }
-    #endif
-
     // Read input.deck
     inputDeckReader.readInputDeck("input.deck");
     checkInput(inputDeckReader.getValue("SOLVER", solverType), __LINE__);
@@ -137,6 +107,26 @@ int main(int argc, char **argv)
     solver->c_floor = initfloor;
     solver->c_initCond = initCond;
     solver->c_inputDeckReader = inputDeckReader;
+    
+    #ifdef USE_PAPI
+    long long papi_values[PAPI_NUM_EVENTS];
+    
+    if(PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
+        printf("Couldn't initialize PAPI\n");
+        utils_abort();
+    }
+
+    for(int i = 0; i < PAPI_NUM_EVENTS; i++) {
+        if(PAPI_query_event(papi_event_list[i]) == PAPI_OK) {
+            solver->c_papi_events[solver->c_papi_event_count] = papi_event_list[i];
+            solver->c_papi_event_count++;
+        }
+    }
+
+    if(node == 0) {
+        papi_hwinfo();
+    }
+    #endif
     
     // Set the number of openmp threads.
     // This must be after readInputDeck and before init.
@@ -227,8 +217,11 @@ int main(int argc, char **argv)
     solver->outputData(t);
 
     #ifdef USE_PAPI
-    PAPI_flops(&rtime, &ptime, &flpops, &mflops);
-    PAPI_ipc(&rtime, &ptime, &ins, &ipc);
+    printf("PAPI starting counter(s) for %d event(s)\n", solver->c_papi_event_count);
+    if(PAPI_start_counters(solver->c_papi_events, solver->c_papi_event_count) != PAPI_OK) {
+        printf("PAPI couldn't start counters\n");
+        utils_abort();
+    }
     #endif
 
     for(double tOut = MIN(t + outDeltaT, tFinal); tOut <= tFinal; 
@@ -256,21 +249,13 @@ int main(int argc, char **argv)
     }
 
     #ifdef USE_PAPI
-    if(PAPI_flops(&rtime, &ptime, &flpops, &mflops) == PAPI_OK) {
-        if(node == 0) {
-            printf("realtime: %f\n", rtime);
-            printf("process time: %f\n", ptime);
-            printf("total flop count: %lld\n", flpops);
-            printf("Mflop/s: %f\n", mflops);
-        }
+    if(PAPI_stop_counters(papi_values, solver->c_papi_event_count) != PAPI_OK) {
+        printf("PAPI couldn't read counters\n");
+        utils_abort();
     }
-    if(PAPI_ipc(&rtime, &ptime, &ins, &ipc) == PAPI_OK) {
-        if(node == 0) {
-            printf("realtime: %f\n", rtime);
-            printf("process time: %f\n", ptime);
-            printf("total instructions: %lld\n", ins);
-            printf("instructions/cycle: %f\n", ipc);
-        }
+
+    if(node == 0) {
+        papi_show_results(solver->c_papi_event_count, solver->c_papi_events, papi_values);
     }
     #endif
 
