@@ -46,17 +46,46 @@
 \newcommand{\momopt}{\texttt{momopt}\xspace}
 
 \frenchspacing
-\raggedright
+%\raggedright
 
 \AtBeginDocument{\let\textlabel\label}
 
-\title{Design Document}
+\title{\texttt{closures-2d} \\ Design Documentation}
 \author{C. Kristopher Garrett, Tim Shaffer}
 
 \begin{document}
 \maketitle
 
-\section{Problems Being Solved}
+\section{Purpose}
+This software that implements various numerical methods for
+approximating the angular variable in kinetic transport in order
+to study performance, accuracy, and robustness on common test problems.
+Whereas fluid equations describe a vector of quantities dependent on space,
+kinetic transport equations describe a scalar density of particles
+depending on both space and velocity. Such numerical methods occur
+frequently in production codes modeling certain physical systems, such as
+neutron transport inside a reactor, neutrino transport in supernova simulations,
+photon transport, and rarefied gas dynamics. Rather than simulating a
+specific physical system, this software solves toy problems that capture
+issues commonly encountered in full simulations. Comparing the performance of
+these numerical methods on our simplified problems can give researchers
+insight into the behavior of similar methods in more complicated
+implementations.
+
+In addition to evaluating the methods themselves, this
+software is written to allow study of
+performance with modern high-performance computing resources. This software
+optionally uses OpenMP and Message Passing Interface~(MPI) to carry
+out parallel and concurrent computations. Studying the behavior of
+numerical methods with such acceleration techniques provides reference for
+implementations on large-scale problems.
+
+This software also supports profiling measurements such as timings, flop rates,
+memory rates, and cache misses. Using statistics about runtime performance,
+we examined code optimizations, bottlenecks, etc. that occur
+in our implementations.
+
+\section{Problem}
 This software simulates particles with unit speed that scatter isotropically from
 an infinite background medium according to a simple kinetic equation. External sources
 are not included, but could be added in the future. The equation governing particle
@@ -78,29 +107,74 @@ solutions to Equation~\ref{eqn:kinetic} as
 the system evolves from one of several initial conditions, defined in
 Section~\ref{sec:initcond}.
 
-\section{Initial Conditions}
-\label{sec:initcond}
+\subsection{Initial Conditions}
+\label{subsec:initcond}
+\FloatBarrier
 At the beginning of simulation, the grid is initialized according to one of several
-configurations. In the Gaussian initial condition, a two dimensional Gaussian function
-is placed with its peak at the center of the grid. The $\sigma$ value is provided as
-a configuration option to the program. The limiting case, when $\sigma=0$, is the
+configurations. First, $\sigma$ on the whole grid is set to the value from
+the configuration file and the initial grid is set to the given floor value at
+all points. Further changes to the initial grid are dependent on the choice
+of initial condition.
+
+\subsubsection{Gaussian Initial Condition}
+\begin{figure}
+    \centering
+    \includegraphics[height=0.3\textheight]{initcond_gaussian.png}
+    \caption{Gaussian Initial Condition}
+\end{figure}
+In the Gaussian initial condition, a two dimensional Gaussian function
+is placed with its peak at the center of the grid. The $\sigma$ value
+is provided as a configuration option to the program. Each point on the
+initial grid is set to
+\begin{equation}
+    \frac{1}{2 \pi \sigma^2} e^{-(x^2 + y^2) / (2 \sigma^2)}.
+\end{equation}
+$\sigma_S$ and $\sigma_T$ are uniformly set to the configured
+value for sigma.
+
+\subsubsection{Delta Initial Condition}
+The limiting case, as $\sigma \to 0$, is the
 Delta initial condition. For this condition, the centermost cell is set to
 $\frac{1}{\Delta x \Delta y}$ where $\Delta x$ and $\Delta y$ are the cell
-dimensions. The Lattice initial condition corresponds to a checker board pattern
+dimensions. $\sigma_S$ and $\sigma_T$ are uniformly set to the configured
+value for sigma.
+
+\subsubsection{Lattice Initial Condition}
+\begin{figure}
+    \centering
+    \includegraphics[height=0.3\textheight]{initcond_lattice-t.png}
+    \caption{$\sigma_T$ for Lattice Initial Condition}
+\end{figure}
+The Lattice initial condition corresponds to a checker board pattern
 of highly scattering and highly absorbing regions. This configuration is reminiscent of a
 small section of a nuclear reactor core. The Lattice initial condition leaves the
 grid initially empty, but has the most complicated scattering pattern of the initial
-conditions. The Smooth initial condition is primarily intended for testing convergence.
-This configuration initializes the grid points with a periodic boundary given by
+conditions. $\sigma_S$ and $\sigma_T$ are set to 1 at all positions, except
+for several blocks arranged throughout the grid at which $\sigma_S=0$ and
+$\sigma_T=10$.
+
+\subsubsection{Smooth Initial Condition}
+\begin{figure}
+    \centering
+    \includegraphics[height=0.3\textheight]{initcond_smooth.png}
+    \caption{Smooth Initial Condition}
+\end{figure}
+The Smooth initial condition is primarily intended for testing convergence.
+This configuration initializes the grid points with a periodic boundary.
+Each point in the initial grid is set to
 \begin{align}
 1 + \sin(2\pi x)\cos(2\pi y).
 \end{align}
+$\sigma_S$ and $\sigma_T$ are uniformly set to the configured
+value for sigma.
 
-\section{\kinetic Solver}
+\subsection{\kinetic Solver}
 The \kinetic solver is an implementation of the discrete ordinates method, also known
 as $\mathrm{S}_N$.
-This method uses Gauss-Legendre quadrature sets on the unit sphere. A Lebedev
-quadrature is also implemented, but is considered experimental. Let
+Our implementation uses a Chebyshev-Legendre quadrature on the unit sphere.
+A Lebedev quadrature is also implemented for this solver,
+but is considered experimental.
+Details of the quadratures are given in Section~\ref{subsec:quadratures}. Let
 $\{\Omega_1, \dots, \Omega_Q\} \in \twosphere$ be be a set of nodes with
 corresponding weights $\{w_1, \dots, w_Q\}$. Then from Equation~\ref{eqn:kinetic}
 \begin{equation}
@@ -112,7 +186,7 @@ where $f_q(x,t) \approx f(x, \Omega_q, t)$ for $q = 1, \dots, Q$.
 This implementation uses Heun's method to achieve second order convergence. Edge values
 are computed via upwinding. For approximate slopes, the double minmod limiter is used.
 
-\section{\moment Solver}
+\subsection{\moment Solver}
 The \moment solver uses standard spectral methods with Equation~\ref{eqn:kinetic}. The real
 spherical harmonics serve as an orthonormal basis of $L^2$ with respect to
 \twosphere for the expansion of the moments. Let
@@ -141,7 +215,6 @@ yielding the closed moment system
     \partial_t \mathbf{u} + \nabla_x \cdot
     \integral{\Omega\mathbf{m}\closure{\mathbf{u}}} = \Dif \mathbf{u}.
 \end{equation}
-
 It is only necessary to use the spherical harmonics $Y_{\ell,m}$ such that
 $\ell + m$ is even.
 
@@ -149,48 +222,47 @@ Various filters can also be applied to suppress oscillations in spherical harmon
 These filters use a scale factor on each cell and timestep to compute a
 perturbed differential equation with minimal added computation.
 
-\subsection{Hauck Filter}
-The Hauck filter is described in (insert citation).
-Let $N$ be the moment order and $\omega$ be the filter tune, and define
-\begin{equation}
-    \alpha = \frac{\omega}{N^2 (\sigma_T L + N)^2}.
-\end{equation}
-Scale each moment by
-\begin{equation}
-    \frac{1}{1 + \alpha n^2 (n+1)^2}
-\end{equation}
-for the $n$\textsuperscript{th} moment.
+\begin{itemize}
+    \item The Hauck filter is described in (insert citation).
+    Let $N$ be the moment order and $\omega$ be the filter tune, and define
+    \begin{equation}
+        \alpha = \frac{\omega}{N^2 (\sigma_T L + N)^2}.
+    \end{equation}
+    Scale each moment by
+    \begin{equation}
+        \frac{1}{1 + \alpha n^2 (n+1)^2}
+    \end{equation}
+    for the $n$\textsuperscript{th} moment.
 
-\subsection{Sspline Filter}
-The Spline filter is given in (insert citation).
-With moment order $N$ and filter tune $\sigma_e$, let
-\begin{equation}
-    s = \frac{-\sigma_e \Delta t}{\log F(N/(N+1))}
-\end{equation}
-where $F(x) = 1/(1 + x^4)$. The scale factor is given by
-\begin{equation}
-    F(n/(N+1))^s.
-\end{equation}
+    \item The Spline filter is given in (insert citation).
+    With moment order $N$ and filter tune $\sigma_e$, let
+    \begin{equation}
+        s = \frac{-\sigma_e \Delta t}{\log F(N/(N+1))}
+    \end{equation}
+    where $F(x) = 1/(1 + x^4)$. The scale factor is given by
+    \begin{equation}
+        F(n/(N+1))^s.
+    \end{equation}
 
-\subsection{Lanczos Filter}
-The Lanczos filter is taken from (insert citation).
-Again with moment order $N$ and filter tune $\sigma_e$, let
-\begin{equation}
-    s = \frac{-\sigma_e \Delta t}{\log L(N / (N+1))}
-\end{equation}
-where
-\begin{equation}
-    L(x) = \begin{dcases*}
-        1 & when $x=0$ \\
-        \frac{\sin x}{x} & otherwise.
-    \end{dcases*}
-\end{equation}
-Now the moment scale factor is
-\begin{equation}
-    L(n / (N+1))^s.
-\end{equation}
+    \item The Lanczos filter is taken from (insert citation).
+    Again with moment order $N$ and filter tune $\sigma_e$, let
+    \begin{equation}
+        s = \frac{-\sigma_e \Delta t}{\log L(N / (N+1))}
+    \end{equation}
+    where
+    \begin{equation}
+        L(x) = \begin{dcases*}
+            1 & when $x=0$ \\
+            \frac{\sin x}{x} & otherwise.
+        \end{dcases*}
+    \end{equation}
+    Now the moment scale factor is
+    \begin{equation}
+        L(n / (N+1))^s.
+    \end{equation}
+\end{itemize}
 
-\section{\momopt Solver}
+\subsection{\momopt Solver}
 One serious drawback of the \moment solver is the possibility of non-realizable
 solutions with negative densities, oscillatory approximations of nonsmooth
 solutions. Nonlinear approaches can ensure positivity,
@@ -223,38 +295,70 @@ solves the dual problem
     \mathbf{\alpha}^T \mathbf{u} \right\}
 \end{equation}
 
+\section{Implementation}
+\subsection{Quadratures}
+\label{subsec:quadratures}
+The Chebyshev-Legendre quadrature is used for numerical integration over
+\twosphere in all of the solvers. This quadrature is constructed from an
+$n$ point Gauss-Legendre rule, which exactly integrates smooth functions of
+order less than $2n-1$. Since this is a 2D code, it is only necessary
+to integrate over the upper half of \twosphere, which is divided into
+$n$~layers along the $z$ axis. Abscissae and weights from GSL are arranged
+in a circle around \twosphere at each layer, giving $n^2$ points on the
+upper half of \twosphere. The Chebyshev-Legendre quadrature is not optimal
+with respect to number of points, but is simple to implement. The Lebedev
+quadrature, for example, is optimal in number of points, and an experimental
+implementation is available for the \kinetic solver. This quadrature, however,
+uses a more complicated arrangement of points, making exploiting symmetries
+in the integral more difficult. In addition, the points of the
+Chebyshev-Legendre quadrature are simply the Cartesian product of $n$ angles
+spaced around a circle and $n$ values of $z$. This structure could allow the
+evaluation of integrals via the Chebyshev-Legendre quadrature to be optimized
+more easily than the Lebedev quadrature, which is arranged nontrivially and
+becomes denser with increasing order.
 
-\section{Installation}
-This software is built using \href{http://scons.org/}{SCons}. If SCons is not
-installed, a copy has been included in the \texttt{build/} directory.
-If Python~2.x is installed but not SCons, replace \texttt{scons} with
-\texttt{python build/scons.py}.
+\subsection{Time}
+Time steps are carried out via Heun's method to achieve second order.
+Heun's method is a two-stage Runge-Kutta method that improves on the
+basic Euler method. To compute the value at the next time step, the solver
+first records the current state, then runs two Euler steps, then takes the
+average of the new state and the initial state. Since Heun's method is a
+strong stability preserving (SSP) method, the stability properties of
+the forward Euler method are preserved in a higher order setting.
 
-To build this software using default options, simply run \[\texttt{scons}\]
-in the
-project directory. SCons will use default compilation options to build
-\texttt{solver\_serial}. If acceleration is desired, it should be provided as
-arguments to SCons, e.g. \[\texttt{scons --omp}\] builds \texttt{solver\_omp}.
-Supported options are
-\texttt{--omp}, \texttt{--mpi}, and \texttt{--cuda}. If multiple acceleration
-options are provided, an optimized executable will be build for each.
-In addition, it is possible to build executables with multiple types of
-acceleration. Simply give the names of the desired optimizations in the order
-MPI, OMP, CUDA, e.g. \[\texttt{scons --omp --mpi solver\_mpiomp}\]
+\subsection{Space}
+Space is discretized using the finite volume method. The problem domain is
+decomposed into a regular grid of cells with an additional halo of ghost cells
+to enforce the boundary condition and allow synchronization with other nodes.
+At each update, the program first computes the flux at each cell, then updates
+the cell values according to the kinetic transport equation. Several of the
+solvers guarantee positivity on the grid.
 
-To successfully build and run, this software requires
-\begin{itemize}
- \item GSL
- \item BLAS
- \item LAPACK
- \item OpenMP (optional, provided by many compilers)
- \item Open MPI (optional)
- \item CUDA development files (optional)
-\end{itemize}
-If these libraries and header files are not in the system's default locations,
-additional search paths can be provided in \texttt{config.py}. This file also
-includes options for controlling the compiler that SCons uses.
+For the \kinetic solver (implementing $S_N$), the timestep
+$\Delta t$ is chosen with respect to the cell size so as not to violate
+the CFL condition. To eliminate the possibility of negative density due
+to scattering, an additional term is included in the CFL check. % check on this
 
+The \momopt solver also ensures positivity as part of the flux calculations.
+The flux is based on an ansatz grid with strictly positive values. For $M_N$,
+the ansatz grid value $a$ at each cell and direction is given by
+\begin{equation}
+    a = \exp (\alpha^T m).
+\end{equation}
+For $PP_N$,
+\begin{equation}
+a =
+\begin{dcases}
+    \frac{1}{2}k + \frac{1}{2}\sqrt{k^2 + 4\delta} & \text{if } k > 0 \\
+    \frac{-\delta}{\frac{1}{2}k - \frac{1}{2}\sqrt{k^2 + 4\delta}} & \text{if } k \leq 0
+\end{dcases}
+\end{equation}
+where $k = \alpha^T m$.
+
+\subsection{Optimization Procedure}
+\dots
+
+\section{Program Layout}
 All options controlling the runtime operation of the program reside in
 \texttt{input.deck}. Comments prefixed with \texttt{\#} are allowed,
 and options not used by the selected solver are ignored. Available options are
@@ -279,8 +383,12 @@ The solver code has an approximately common layout, e.g. in \texttt{src/moment/}
  \item \texttt{moment\_output.cpp} -- Write out results
 \end{itemize}
 
+\section{Results}
+\dots
 
-\section{Implementation Details}
+\clearpage
+\appendix
+\section{Gritty Details}
 \subsection{\main}
 \label{src:main.cpp}
 The main entry point for the program, \main, is responsible for reading the input
@@ -305,7 +413,7 @@ in \main. At present, all solvers use this
 method. The grid is represented as a two dimensional array of floating point values.
 The grids used in the program are larger than configured in \inputdeck; a border of
 of a specified width of ghost cells is added outside the grid described in the
-configuration.  The center points of the cells are used for calculation of
+configuration. The center points of the cells are used for calculation of
 initial conditions. Figure~\ref{fig:grid} illustrates this layout.
 There are two other arrays of identical size storing $\sigma_S$ and $\sigma_T$
 values. To initialize the grid, first set the the border cells to the

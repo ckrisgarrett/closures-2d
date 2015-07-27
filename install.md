@@ -17,7 +17,7 @@ paths, include paths, compiler flags, etc.
 Building
 ========
 
-This software is build using [SCons](http://scons.org/). In case SCons is not
+This software is built using [SCons](http://scons.org/). In case SCons is not
 installed locally, a copy is included in the `build/` directory. To use it,
 ensure that Python 2.x is installed and
 replace `scons` in the following build commands with `python build/scons.py`.
