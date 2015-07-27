@@ -38,6 +38,42 @@ static void checkInput(bool isOk, int lineNumber)
     }
 }
 
+#ifdef USE_PAPI
+void Solver::papi_start_update(PAPI_info_t *info) {
+    info->_prev_nsecs = PAPI_get_real_nsec();
+    info->_prev_cycles = PAPI_get_real_cyc();
+    PAPI_read(c_papi_event_set, info->_prev_values);
+}
+
+void Solver::papi_finish_update(PAPI_info_t *info) {
+    long long vals[PAPI_NUM_EVENTS];
+    PAPI_read(c_papi_event_set, vals);
+
+    info->cycles += PAPI_get_real_cyc() - info->_prev_cycles;
+    info->nsecs += PAPI_get_real_nsec() - info->_prev_nsecs;
+    for(int i = 0; i < c_papi_event_count; i++) {
+        info->values[i] += vals[i] - info->_prev_values[i];
+    }
+    info->iterations++;
+}
+
+void Solver::papi_show_result(PAPI_info_t *info) {
+    PAPI_event_info_t event_info;
+
+    printf("- Iterations: %lld\n", info->iterations);
+    printf("- Nanoseconds: %lld\n", info->nsecs);
+    printf("- Cycles: %lld\n", info->cycles);
+    for(int i = 0; i < c_papi_event_count; i++) {
+        if(PAPI_get_event_info(c_papi_events[i], &event_info) != PAPI_OK) {
+            printf("PAPI invalid event\n");
+            utils_abort();
+        }
+        printf("- %s: ", event_info.short_descr);
+        printf("%lld\n", info->values[i]);
+    }
+}
+#endif
+
 /*
     Start the program.
 */
@@ -109,22 +145,67 @@ int main(int argc, char **argv)
     solver->c_inputDeckReader = inputDeckReader;
     
     #ifdef USE_PAPI
-    long long papi_values[PAPI_NUM_EVENTS];
+    solver->c_papi_event_set = PAPI_NULL;
+    solver->c_comm_info.iterations = 0;
     
     if(PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT) {
         printf("Couldn't initialize PAPI\n");
         utils_abort();
     }
 
+    if(node == 0) {
+        const PAPI_hw_info_t *hwinfo = NULL;
+
+        if((hwinfo = PAPI_get_hardware_info()) == NULL) {
+            printf("PAPI couldn't get hardware info\n");
+            utils_abort();
+        } else {
+            printf("--- Hardware Info ---\n");
+            printf("CPU Vendor: %s (%d)\n", hwinfo->vendor_string, hwinfo->vendor);
+            printf("CPU Model: %s (%d)\n", hwinfo->model_string, hwinfo->model);
+            printf("CPU Revision: %f\n", hwinfo->revision);
+            printf("CPUID Family: %d\n", hwinfo->cpuid_family);
+            printf("CPUID Model: %d\n", hwinfo->cpuid_model);
+            printf("CPUID Stepping: %d\n", hwinfo->cpuid_stepping);
+            printf("CPU Max MHz: %d\n", hwinfo->cpu_max_mhz);
+            printf("CPU Min MHz: %d\n", hwinfo->cpu_min_mhz);
+            printf("Total CPUs: %d\n", hwinfo->totalcpus);
+            printf("Sockets: %d\n", hwinfo->sockets);
+            printf("Cores per socket: %d\n", hwinfo->cores);
+            printf("Hardware threads per core: %d\n", hwinfo->threads);
+            printf("Total NUMA Nodes: %d\n", hwinfo->nnodes);
+            printf("CPUs per NUMA Node: %d\n", hwinfo->ncpu);
+            printf("Virtualized: ");
+            if(hwinfo->virtualized)
+                printf("yes\n");
+            else
+                printf("no\n");
+            printf("Virtual Vendor: %s\n", hwinfo->virtual_vendor_string);
+            printf("Virtual Version: %s\n", hwinfo->virtual_vendor_version);
+        }
+    }
+
+    if(PAPI_create_eventset(&(solver->c_papi_event_set)) != PAPI_OK) {
+        printf("PAPI couldn't create event set\n");
+        utils_abort();
+    }
+
+
+    solver->c_papi_event_count = 0;
     for(int i = 0; i < PAPI_NUM_EVENTS; i++) {
         if(PAPI_query_event(papi_event_list[i]) == PAPI_OK) {
+            if(PAPI_add_event(solver->c_papi_event_set, papi_event_list[i]) != PAPI_OK) {
+                printf("PAPI couldn't add event\n");
+                utils_abort();
+            }
             solver->c_papi_events[solver->c_papi_event_count] = papi_event_list[i];
             solver->c_papi_event_count++;
         }
     }
 
-    if(node == 0) {
-        papi_hwinfo();
+    if(PAPI_start(solver->c_papi_event_set) != PAPI_OK) {
+        printf("PAPI couldn't start counters\n");
+        utils_abort();
     }
     #endif
     
@@ -208,21 +289,13 @@ int main(int argc, char **argv)
     solver->initializeGrid(solver->getNumGhostCells(), dx, dy, sigma);
     double max_dt = solver->init(dx, dy);
     if(node == 0)
-        printf("Init done.\n");
+        printf("--- Init done ---\n");
     
     
     // Start loop in time.
     double t = 0;
     double dt = max_dt;
     solver->outputData(t);
-
-    #ifdef USE_PAPI
-    printf("PAPI starting counter(s) for %d event(s)\n", solver->c_papi_event_count);
-    if(PAPI_start_counters(solver->c_papi_events, solver->c_papi_event_count) != PAPI_OK) {
-        printf("PAPI couldn't start counters\n");
-        utils_abort();
-    }
-    #endif
 
     for(double tOut = MIN(t + outDeltaT, tFinal); tOut <= tFinal; 
         tOut = MIN(tOut + outDeltaT, tFinal))
@@ -249,13 +322,9 @@ int main(int argc, char **argv)
     }
 
     #ifdef USE_PAPI
-    if(PAPI_stop_counters(papi_values, solver->c_papi_event_count) != PAPI_OK) {
-        printf("PAPI couldn't read counters\n");
+    if(PAPI_stop(solver->c_papi_event_set, NULL) != PAPI_OK) {
+        printf("PAPI couldn't stop counters\n");
         utils_abort();
-    }
-
-    if(node == 0) {
-        papi_show_results(solver->c_papi_event_count, solver->c_papi_events, papi_values);
     }
     #endif
 
@@ -268,7 +337,15 @@ int main(int argc, char **argv)
     #ifdef USE_MPI
     MPI_Finalize();
     #endif
-    
+
+    #ifdef USE_PAPI
+    if(node == 0) {
+        solver->papi_output();
+        printf("Solver::communicateBoundaries\n");
+        solver->papi_show_result(&(solver->c_comm_info));
+    }
+    #endif
+
     return 0;
 }
 

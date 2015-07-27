@@ -55,8 +55,15 @@ public:
     InputDeckReader c_inputDeckReader;
     
     #ifdef USE_PAPI
-    int c_papi_event_count;
     int c_papi_events[PAPI_NUM_EVENTS];
+    int c_papi_event_set;
+    int c_papi_event_count;
+    PAPI_info_t c_comm_info;
+
+    void papi_start_update(PAPI_info_t*);
+    void papi_finish_update(PAPI_info_t*);
+    void papi_show_result(PAPI_info_t*);
+    virtual void papi_output() = 0;
     #endif
     
     enum

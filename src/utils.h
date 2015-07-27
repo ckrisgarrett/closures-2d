@@ -26,8 +26,16 @@ const int papi_event_list[] = {
     PAPI_VEC_SP,
     PAPI_VEC_DP
 };
-void papi_hwinfo();
-void papi_show_results(int count, int*, long long*);
+
+typedef struct _PAPI_info {
+    long long iterations;
+    long long cycles;
+    long long nsecs;
+    long long values[PAPI_NUM_EVENTS];
+    long long _prev_cycles;
+    long long _prev_nsecs;
+    long long _prev_values[PAPI_NUM_EVENTS];
+} PAPI_info_t;
 #endif
 
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
