@@ -24,6 +24,12 @@ public:
 
     int getNumGhostCells() { return 2; }
 
+    #ifdef USE_PAPI
+    PAPI_info_t c_update_info;
+    PAPI_info_t c_flux_info;
+    void papi_output();
+    #endif
+
 private:
     double *c_kinetic;
     double *c_flux;

@@ -37,6 +37,9 @@ static double slopefit(double left, double center, double right, double theta)
 */
 void KineticSolver::solveFlux(double *kinetic, double *flux, double dx, double dy)
 {
+    #ifdef USE_PAPI
+    papi_start_update(&c_flux_info);
+    #endif
     int numX = c_gX[3] - c_gX[0] + 1;
     int numY = c_gY[3] - c_gY[0] + 1;
     int numGridPoints = numX * numY;
@@ -102,6 +105,9 @@ void KineticSolver::solveFlux(double *kinetic, double *flux, double dx, double d
                                (northFlux - southFlux) * c_eta[q] / dy;
         }
     }
+    #ifdef USE_PAPI
+    papi_finish_update(&c_flux_info);
+    #endif
 }
 
 
@@ -110,6 +116,10 @@ void KineticSolver::solveFlux(double *kinetic, double *flux, double dx, double d
 */
 void KineticSolver::update(double dt, double dx, double dy)
 {
+    #ifdef USE_PAPI
+    papi_start_update(&c_update_info);
+    #endif
+
     static bool firstTime = true;
     static double *kineticOld;
     if(firstTime)
@@ -172,10 +182,6 @@ void KineticSolver::update(double dt, double dx, double dy)
     // Do second Euler step.
     communicateBoundaries();
     solveFlux(c_kinetic, c_flux, dx, dy);
-    
-    // Do first Euler step.
-    communicateBoundaries();
-    solveFlux(c_kinetic, c_flux, dx, dy);
 
     for(int i = c_gX[1]; i <= c_gX[2]; i++)
     {
@@ -220,5 +226,9 @@ void KineticSolver::update(double dt, double dx, double dy)
             }
         }
     }
+
+    #ifdef USE_PAPI
+    papi_finish_update(&c_update_info);
+    #endif
 }
 

@@ -31,6 +31,9 @@ int Solver::mpiIndex(char direction, int node)
 
 void Solver::communicateBoundaries()
 {
+    #ifdef USE_PAPI
+    papi_start_update(&c_comm_info);
+    #endif
     // Variables.
     int boundarySizeX = getBoundarySizeX();
     int boundarySizeY = getBoundarySizeY();
@@ -145,12 +148,21 @@ void Solver::communicateBoundaries()
     
     // Set boundaries.
     setOuterBoundaries(recvNorth, recvSouth, recvEast, recvWest);
+    #ifdef USE_PAPI
+    papi_finish_update(&c_comm_info);
+    #endif
 }
 #else
 void Solver::communicateBoundaries()
 {
+    #ifdef USE_PAPI
+    papi_start_update(&c_comm_info);
+    #endif
     if(c_initCond == INITCOND_PERIODIC) {
         duplicateBoundaries();
     }
+    #ifdef USE_PAPI
+    papi_finish_update(&c_comm_info);
+    #endif
 }
 #endif

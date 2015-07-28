@@ -76,3 +76,8 @@ void MomOptSolver::outputData(double time)
     fclose(file);
 }
 
+#ifdef USE_PAPI
+void MomOptSolver::papi_output() {
+    
+}
+#endif
