@@ -8,6 +8,7 @@
 #define _SOLVER_H
 
 #include "input_deck_reader.h"
+#include "utils.h"
 
 #define I2D(i,j) ((i)*(c_gY[3]-c_gY[0]+1) + (j))
 #define I3D(i,j,k) (((i)*(c_gY[3]-c_gY[0]+1) + (j))*(c_vectorSize) + (k))
@@ -52,6 +53,18 @@ public:
     int c_vectorSize;               // number of moments or quadrature points (Sn)
     
     InputDeckReader c_inputDeckReader;
+    
+    #ifdef USE_PAPI
+    int c_papi_events[PAPI_NUM_EVENTS];
+    int c_papi_event_set;
+    int c_papi_event_count;
+    PAPI_info_t c_comm_info;
+
+    void papi_start_update(PAPI_info_t*);
+    void papi_finish_update(PAPI_info_t*);
+    void papi_show_result(PAPI_info_t*);
+    virtual void papi_output() = 0;
+    #endif
     
     enum
     {

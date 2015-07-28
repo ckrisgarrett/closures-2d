@@ -58,5 +58,3 @@ void utils_getGaussianWeightsAndNodes(int n, double *w, double *mu)
     for(int i = 0; i < n; i++)
         gsl_integration_glfixed_point(-1, 1, i, &mu[i], &w[i], table);
 }
-
-

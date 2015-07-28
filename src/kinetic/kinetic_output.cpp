@@ -58,3 +58,11 @@ void KineticSolver::outputData(double time)
     fclose(file);
 }
 
+#ifdef USE_PAPI
+void KineticSolver::papi_output() {
+    printf("KineticSolver::update\n");
+    papi_show_result(&c_update_info);
+        printf("KineticSolver::solveFlux\n");
+    papi_show_result(&c_flux_info);
+}
+#endif

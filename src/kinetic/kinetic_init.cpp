@@ -121,6 +121,12 @@ double KineticSolver::init(double dx, double dy)
     free(mu);
     free(phi);
 
+    #ifdef USE_PAPI
+    c_update_info.iterations = 0;
+    c_flux_info.iterations = 0;
+    c_comm_info.iterations = 0;
+    #endif
+
     return maxDt;
 }
 
