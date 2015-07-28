@@ -182,10 +182,6 @@ void KineticSolver::update(double dt, double dx, double dy)
     // Do second Euler step.
     communicateBoundaries();
     solveFlux(c_kinetic, c_flux, dx, dy);
-    
-    // Do first Euler step.
-    communicateBoundaries();
-    solveFlux(c_kinetic, c_flux, dx, dy);
 
     for(int i = c_gX[1]; i <= c_gX[2]; i++)
     {
