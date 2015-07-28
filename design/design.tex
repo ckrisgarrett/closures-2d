@@ -10,6 +10,8 @@
 \usepackage{nth}
 \usepackage{xspace}
 \usepackage{hyperref}
+\usepackage{defs}
+\usepackage{fonts}
 
 \newcommand{\main}{\texttt{main.cpp}\xspace}
 \newcommand{\comm}{\texttt{comm.cpp}\xspace}
@@ -34,8 +36,8 @@
 \DeclareMathOperator{\minmod}{minmod}
 \DeclareMathOperator{\slopefit}{slopefit}
 \DeclareMathOperator{\sgn}{sgn}
-\DeclareMathOperator*{\argmin}{arg\,min}
-\DeclareMathOperator*{\argmax}{arg\,max}
+%\DeclareMathOperator*{\argmin}{arg\,min}
+%\DeclareMathOperator*{\argmax}{arg\,max}
 
 \newcommand{\integral}[1]{\ensuremath{\langle #1 \rangle}}
 \newcommand{\closure}[1]{\ensuremath{\mathcal{E}(#1)}}
@@ -55,9 +57,10 @@
 
 \begin{document}
 \maketitle
+\tableofcontents
 
 \section{Purpose}
-This software that implements various numerical methods for
+This software implements various numerical methods for
 approximating the angular variable in kinetic transport in order
 to study performance, accuracy, and robustness on common test problems.
 Whereas fluid equations describe a vector of quantities dependent on space,
@@ -66,7 +69,7 @@ depending on both space and velocity. Such numerical methods occur
 frequently in production codes modeling certain physical systems, such as
 neutron transport inside a reactor, neutrino transport in supernova simulations,
 photon transport, and rarefied gas dynamics. Rather than simulating a
-specific physical system, this software solves toy problems that capture
+specific physical system, this software solves simpler problems that capture
 issues commonly encountered in full simulations. Comparing the performance of
 these numerical methods on our simplified problems can give researchers
 insight into the behavior of similar methods in more complicated
@@ -86,51 +89,49 @@ we examined code optimizations, bottlenecks, etc. that occur
 in our implementations.
 
 \section{Problem}
-This software simulates particles with unit speed that scatter isotropically from
-an infinite background medium according to a simple kinetic equation. External sources
-are not included, but could be added in the future. The equation governing particle
-behavior takes the form
+This software simulates particles with unit speed that scatter isotropically according to a simple kinetic equation. 
+The equation governing particle behavior takes the form
 \begin{align}
     \label{eqn:kinetic}
-    \partial_t f + \Omega \cdot \nabla_x f + \sigma_T f =
-    \frac{\sigma_S}{4\pi} \integral{f}
+    \partial_t f + \Omega \cdot \nabla_x f + \sigma_t f =
+    \frac{\sigma_s}{4\pi} \integral{f}
 \end{align}
-where $x \in \threespace$ is position, $\Omega \in \twosphere$ (the unit sphere)
-is the direction of travel, $\sigma = \sigma(x)$ is the scattering cross section, and
+where $f(x,\Omega,t)$ is the density of particles, $x \in \mathcal{D} \subset \mathbb{R}^2$ is position, $\Omega \in \twosphere \subset \threespace$ (the unit sphere)
+is the direction of travel, $\sigma_t(x) \geq \sigma_s(x)$ are the total and scattering cross sections, and
 \integral{\cdot} is shorthand for integration over \twosphere.
+The boundary conditions implemented are either zero inflow boundary conditions or periodic boundary conditions depending on the initial condition discussed in Section~\ref{subsec:initcond}.
 
-The \kinetic solver directly computes solutions to
-Equation~\ref{eqn:kinetic}, while the \moment solver calculates solutions based on
-the spherical harmonic basis functions. The \momopt solver includes additional
-optimizations and experimental features. This program explicitly computes approximate
-solutions to Equation~\ref{eqn:kinetic} as
-the system evolves from one of several initial conditions, defined in
-Section~\ref{sec:initcond}.
+%The \kinetic solver directly computes solutions to
+%Equation~\ref{eqn:kinetic}, while the \moment solver calculates solutions based on
+%the spherical harmonic basis functions. The \momopt solver includes additional
+%optimizations and experimental features. This program explicitly computes approximate
+%solutions to Equation~\ref{eqn:kinetic} as
+%the system evolves from one of several initial conditions, defined in
+%Section~\ref{sec:initcond}.
 
 \subsection{Initial Conditions}
 \label{subsec:initcond}
 \FloatBarrier
-At the beginning of simulation, the grid is initialized according to one of several
-configurations. First, $\sigma$ on the whole grid is set to the value from
-the configuration file and the initial grid is set to the given floor value at
-all points. Further changes to the initial grid are dependent on the choice
-of initial condition.
+The following initial conditions are implemented in this software.
 
 \subsubsection{Gaussian Initial Condition}
 \begin{figure}
     \centering
     \includegraphics[height=0.3\textheight]{initcond_gaussian.png}
     \caption{Gaussian Initial Condition}
+    \label{fig:gaussian_ic}
 \end{figure}
 In the Gaussian initial condition, a two dimensional Gaussian function
-is placed with its peak at the center of the grid. The $\sigma$ value
-is provided as a configuration option to the program. Each point on the
+is placed with its peak at the center of the grid. Each point on the
 initial grid is set to
 \begin{equation}
-    \frac{1}{2 \pi \sigma^2} e^{-(x^2 + y^2) / (2 \sigma^2)}.
+    f(x,y,\Omega,0) = \max \left( \frac{1}{2 \pi \sigma_g^2} e^{-(x^2 + y^2) / (2 \sigma_g^2)}, \texttt{floor} \right), 
 \end{equation}
-$\sigma_S$ and $\sigma_T$ are uniformly set to the configured
-value for sigma.
+where $\sigma_g$ is set by the user.
+The cross sections $\sigma_s$ and $\sigma_t$ are constants defined by the user.
+The zero inflow boundary condition is used.
+Figure~\ref{fig:gaussian_ic} shows the initial condition of $\vint{f}$ for $\sigma_g = ???$. 
+\comment{Follow this pattern for other initial conditions.}
 
 \subsubsection{Delta Initial Condition}
 The limiting case, as $\sigma \to 0$, is the
@@ -144,6 +145,7 @@ value for sigma.
     \centering
     \includegraphics[height=0.3\textheight]{initcond_lattice-t.png}
     \caption{$\sigma_T$ for Lattice Initial Condition}
+    \label{fig:lattice_ic}
 \end{figure}
 The Lattice initial condition corresponds to a checker board pattern
 of highly scattering and highly absorbing regions. This configuration is reminiscent of a
@@ -152,12 +154,14 @@ grid initially empty, but has the most complicated scattering pattern of the ini
 conditions. $\sigma_S$ and $\sigma_T$ are set to 1 at all positions, except
 for several blocks arranged throughout the grid at which $\sigma_S=0$ and
 $\sigma_T=10$.
+\comment{State the source too.}
 
 \subsubsection{Smooth Initial Condition}
 \begin{figure}
     \centering
     \includegraphics[height=0.3\textheight]{initcond_smooth.png}
     \caption{Smooth Initial Condition}
+    \label{fig:smooth_ic}
 \end{figure}
 The Smooth initial condition is primarily intended for testing convergence.
 This configuration initializes the grid points with a periodic boundary.
@@ -168,7 +172,9 @@ Each point in the initial grid is set to
 $\sigma_S$ and $\sigma_T$ are uniformly set to the configured
 value for sigma.
 
-\subsection{\kinetic Solver}
+
+\section{Angular Approximations}
+\subsection{Discrete Ordinates}
 The \kinetic solver is an implementation of the discrete ordinates method, also known
 as $\mathrm{S}_N$.
 Our implementation uses a Chebyshev-Legendre quadrature on the unit sphere.
@@ -186,19 +192,21 @@ where $f_q(x,t) \approx f(x, \Omega_q, t)$ for $q = 1, \dots, Q$.
 This implementation uses Heun's method to achieve second order convergence. Edge values
 are computed via upwinding. For approximate slopes, the double minmod limiter is used.
 
-\subsection{\moment Solver}
+\subsection{Moment Solvers}
+\comment{Show basic setup. Then define $\mathcal{E}(\bu)$ for each type.}
 The \moment solver uses standard spectral methods with Equation~\ref{eqn:kinetic}. The real
 spherical harmonics serve as an orthonormal basis of $L^2$ with respect to
 \twosphere for the expansion of the moments. Let
 $\mathbf{m}(\Omega) =
 (Y_{0,0}, Y_{1,-1}, Y_{1,0}, Y_{1,1}, \dots, Y_{N,-N}, \dots, Y_{N,N})^T$
-be a vector of spherical harmonics up to and including degree $N$. The the moments
+be a vector of spherical harmonics up to and including degree $N$. The moments
 with respect to $\mathbf{m}$ are given by
 \begin{equation}
-    \mathbf{u}(\mathbf{x}, t) =
+    \mathbf{u}^{\textrm{exact}}(\mathbf{x}, t) =
     \integral{\mathbf{m}(\Omega) f(\mathbf{x}, \Omega, t)}
 \end{equation}
 since $u_{\ell,m} = f_{\ell,m}$ and the collision operator is diagonalized.
+\comment{Separate exact u from approximate u.}
 The exact moment system is given by
 \begin{equation}
     \partial_t \mathbf{u} + \nabla_x \cdot \integral{\Omega\mathbf{m}f} =
@@ -216,14 +224,30 @@ yielding the closed moment system
     \integral{\Omega\mathbf{m}\closure{\mathbf{u}}} = \Dif \mathbf{u}.
 \end{equation}
 It is only necessary to use the spherical harmonics $Y_{\ell,m}$ such that
-$\ell + m$ is even.
+$\ell + m$ is even. \comment{State why...}
+
+
+
+\subsubsection{Entropy Minimization}
+Suppose $\closure{\bu}$ is obtained as an entropy minimization
+\begin{equation}
+    \label{eqn:entropy}
+    \mathcal{E}(\mathbf{u}) = \argmin_{g \in L^1} \integral{\eta(g)} \quad
+    \textnormal{subject to} \quad \integral{\mathbf{m}g} = \mathbf{u}
+\end{equation}
+\comment{Fill in the rest here.}
+
+
+
+\subsubsection{P$_N$}
+$\closure{\bu} = \bm^T \bu$.
+Can get this by (1) truncating, (2) least squares, (3) minimizing entropy.
+\comment{Fill in a little bit.}
 
 Various filters can also be applied to suppress oscillations in spherical harmonics.
-These filters use a scale factor on each cell and timestep to compute a
-perturbed differential equation with minimal added computation.
 
 \begin{itemize}
-    \item The Hauck filter is described in (insert citation).
+    \item The Hauck filter is described in \cite{Hauck-McClarren-2010}.
     Let $N$ be the moment order and $\omega$ be the filter tune, and define
     \begin{equation}
         \alpha = \frac{\omega}{N^2 (\sigma_T L + N)^2}.
@@ -234,7 +258,7 @@ perturbed differential equation with minimal added computation.
     \end{equation}
     for the $n$\textsuperscript{th} moment.
 
-    \item The Spline filter is given in (insert citation).
+    \item The Spline filter is given in \cite{Radice-2013}.
     With moment order $N$ and filter tune $\sigma_e$, let
     \begin{equation}
         s = \frac{-\sigma_e \Delta t}{\log F(N/(N+1))}
@@ -262,10 +286,14 @@ perturbed differential equation with minimal added computation.
     \end{equation}
 \end{itemize}
 
-\subsection{\momopt Solver}
-One serious drawback of the \moment solver is the possibility of non-realizable
+\subsection{M$_N$ and PP$_N$}
+One serious drawback of the P$_N$ method is the possibility of non-realizable
 solutions with negative densities, oscillatory approximations of nonsmooth
-solutions. Nonlinear approaches can ensure positivity,
+solutions. 
+\comment{Can just put the definitions for $\eta$ and other stuff here for M$_N$ and PP$_N$.}
+\comment{Also, the link boxes are useful but ugly.  Get rid of them.}
+
+Nonlinear approaches can ensure positivity,
 but come with increased complexity and computational cost. In general,
 entropy-based moment closures, like the \momopt solver, can be cast in the
 framework of the following minimization problem
@@ -292,13 +320,14 @@ solves the dual problem
 \begin{equation}
     \hat{\mathbf{\alpha}}(\mathbf{u}) = \argmin_{\mathbf{\alpha} \in \R^n}
     \left\{ \integral{\eta_*(\mathbf{\alpha}^T\mathbf{m})} -
-    \mathbf{\alpha}^T \mathbf{u} \right\}
+    \mathbf{\alpha}^T \mathbf{u} \right\}.
 \end{equation}
 
 \section{Implementation}
 \subsection{Quadratures}
 \label{subsec:quadratures}
-The Chebyshev-Legendre quadrature is used for numerical integration over
+\comment{Let's go over this.  Some of the wording is not quite right.}
+The Chebyshev-Legendre quadrature \cite{atkinson-1982} is used for numerical integration over
 \twosphere in all of the solvers. This quadrature is constructed from an
 $n$ point Gauss-Legendre rule, which exactly integrates smooth functions of
 order less than $2n-1$. Since this is a 2D code, it is only necessary
@@ -316,17 +345,17 @@ spaced around a circle and $n$ values of $z$. This structure could allow the
 evaluation of integrals via the Chebyshev-Legendre quadrature to be optimized
 more easily than the Lebedev quadrature, which is arranged nontrivially and
 becomes denser with increasing order.
+\comment{Write in implementation here.  Not in appendix.}
 
 \subsection{Time}
-Time steps are carried out via Heun's method to achieve second order.
-Heun's method is a two-stage Runge-Kutta method that improves on the
-basic Euler method. To compute the value at the next time step, the solver
-first records the current state, then runs two Euler steps, then takes the
-average of the new state and the initial state. Since Heun's method is a
-strong stability preserving (SSP) method, the stability properties of
-the forward Euler method are preserved in a higher order setting.
+Time steps are carried out via Heun's method which is an explicit two-stage Runge-Kutta method that is second order accurate. 
+\comment{Write equation.}
+Notice Heun's method is the average of two Euler steps which puts it into the category of a strong stability preserving (SSP) method.
+SSP methods preserve properties satisfied by the Euler method.
+In particular, the software uses this method to ensure positivity for some methods.
 
 \subsection{Space}
+\comment{All the implementation stuff should be here.  Not in the appendix.  Add proof of positivity for S$_N$ and M$_N$ and PP$_N$.}
 Space is discretized using the finite volume method. The problem domain is
 decomposed into a regular grid of cells with an additional halo of ghost cells
 to enforce the boundary condition and allow synchronization with other nodes.
@@ -359,6 +388,8 @@ where $k = \alpha^T m$.
 \dots
 
 \section{Program Layout}
+\comment{Make this nicer.  Introduce each solver here (i.e. kinetic\_solver) as associated with for instance S$_N$.}
+\comment{Describe binary file formats.}
 All options controlling the runtime operation of the program reside in
 \texttt{input.deck}. Comments prefixed with \texttt{\#} are allowed,
 and options not used by the selected solver are ignored. Available options are
@@ -389,6 +420,7 @@ The solver code has an approximately common layout, e.g. in \texttt{src/moment/}
 \clearpage
 \appendix
 \section{Gritty Details}
+\comment{Most of this should not be here, but rather in the math section.}
 \subsection{\main}
 \label{src:main.cpp}
 The main entry point for the program, \main, is responsible for reading the input
@@ -422,6 +454,7 @@ main cells.
 
 \subsubsection{Delta Initial Condition}
 \label{init:delta}
+\comment{Probably need this text somewhere.}
 When \texttt{INITCOND\_LINESOURCE} is specified with Gaussian $\sigma=0$, the
 Delta Initial Condition applies. In this case, $\sigma_S$ and $\sigma_T$ for each
 cell are set to $\sigma$. The cells of the initial grid are set to \floor,
@@ -495,12 +528,14 @@ to $\sigma$, and the initial value at each point $(x_I,y_j)$ is set to
 
 \subsection{\comm}
 \label{src:comm.cpp}
+\comment{Maybe put how MPI works in Program Layout.  Also put OpenMP stuff in there too so the user knows what is sped up and how.}
 When using MPI, \comm communicates boundary data between nodes.
 \texttt{Solver::getInnerBoundaries} is first called to obtain grid data on the
 boundaries of the current node's region of the domain. Next, each node trades boundary
 data with its neighbors to the north, south, east, then west via
-\texttt{MPI\_Sendrecv}. Finally, the node calls \texttt{Solver::setOuterBoundaries}
+\texttt{MPI\_ISend} and \texttt{MPI\_IRecv}. Finally, the node calls \texttt{Solver::setOuterBoundaries}
 to update its grid with the data from neighboring nodes.
+\comment{Note scaling has not been tested for MPI.}
 
 \subsection{\utils}
 \label{src:utils.cpp}
@@ -568,6 +603,8 @@ call to update one time step operates as follows:
 \end{enumerate}
 Some preliminary functions will be used in the discussion of the above steps.
 
+
+\comment{The minmod preserves positivity.  Need to show this.}
 The \texttt{minmod(double x, double y)} function is designed to return
 \begin{itemize}
     \item 0 if $xy < 1$
@@ -649,7 +686,7 @@ and the number of quadrature points and weights. The rest of the file contains t
 floating point values of \texttt{c\_kinetic} over the main grid (\emph{not}
 including the ghost cells).
 
-\section{Special Files}
+\section{Special Files \comment{UPDATE ME}}
 \label{file}
 \subsection{\inputdeck}
 \label{file:input.deck}
@@ -729,4 +766,12 @@ Table~\ref{table:kinetic.deck}.
             CFL~Condition.
     \end{tabu}
 \end{table}
+
+
+
+
+\bibliographystyle{plain}
+{\footnotesize
+\bibliography{refs}}
+
 \end{document}

@@ -1,0 +1,82 @@
+% editing
+\usepackage{color}
+\newcommand{\comment}[1] {{\color{red} #1}}
+\newcommand{\change} [1] {{\color{blue} #1}}
+
+% shorthands
+
+\def\Diag{\operatorname{Diag}}
+\def\minimize{\operatorname*{minimize}}
+\def\st{\operatorname*{subject~to}}
+\def\quand{\quad \mbox{and} \quad}
+\def\p{\partial}
+\def\grad{\nabla}
+\def\veps{\varepsilon}
+\def\half{\frac{1}{2}}
+\def\third{\frac{1}{3}}
+\def\root3{\sqrt{3}}
+\def\pn{$P_N$ }
+\def\dt{\Delta t}
+\def\dv{\Delta v}
+\def\dx{\Delta x}
+\def\dy{\Delta y}
+\def\dz{\Delta z}
+\def\intr{\operatorname*{int}}
+
+\def\divg{\grad \cdot}
+\def\curl{\grad \times}
+
+\def\mfp{mean-free-path}
+
+
+%commands
+
+\newcommand{\dby}[1]{\partial_{#1}}
+\newcommand{\vint}[1]{\langle #1 \rangle}
+\newcommand{\Vint}[1]{\left\langle #1 \right\rangle}
+\newcommand{\sig}[1]{\sigma_{\mathrm{#1}}}
+\newcommand{\itembf}[1]{\item \textbf{#1}}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+%presentation commands
+
+\newcommand{\boxeq}[1]{\begin{equation*} \boxed{#1} \end{equation*}}
+\newcommand{\boxeqq}[2]{\begin{equation*} #1 \boxed{#2} \end{equation*}}
+\newcommand{\boxal}[1]{\begin{equation*} \boxed{\begin{aligned} #1
+\end{aligned}} \end{equation*}}
+\newcommand{\boxga}[1]{\begin{equation*} \boxed{\begin{gathered} #1
+\end{gathered}} \end{equation*}}
+\newcommand{\boxmult}[1]{\begin{multline*} \boxed{#1} \end{multline*}}
+
+
+\newcommand{\csection}[1]{
+\section{#1}
+\begin{frame}
+\begin{center}
+ {\LARGE\underline{#1}} \\
+%  \tableofcontents[sectionstyle=show/hide,subsectionstyle=show/show/hide]
+\end{center}
+\end{frame}
+\clearpage
+}
+
+\newcommand{\csubsection}[1]{
+\subsection{#1}
+\begin{frame}
+\begin{center}
+  {\underline{#1}}
+%  \tableofcontents[sectionstyle=show/hide,subsectionstyle=show/show/hide]
+\end{center}
+\end{frame}
+\clearpage
+}
+
+\newcommand{\banner}[1]{
+\begin{frame} 
+\begin{center}
+ \LARGE{\underline{#1}}
+\end{center}
+\end{frame}
+\clearpage
+}
