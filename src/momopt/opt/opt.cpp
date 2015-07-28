@@ -208,11 +208,11 @@ void optScaled(int nm, int nm2, int nq, double *u, double *alpha, double *w, dou
         switch(options->momentType)
         {
             case MOMENT_TYPE_MN:
-                f = fobjMn(nm, nm2, nq, alpha, u, w, p, g, h, options->useClebschGordan);
+                f = fobjMn(nm, nm2, nq, alpha, u, w, p, g, h, options->useGaunt);
                 break;
             case MOMENT_TYPE_PPN:
                 f = fobjPPn(nm, nm2, nq, alpha, u, w, p, options->deltaPPn, g, h, 
-                    options->useClebschGordan);
+                    options->useGaunt);
         }
 
         

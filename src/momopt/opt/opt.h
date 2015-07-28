@@ -19,7 +19,7 @@ struct OPTIONS
     double condHMax;
     double condHMaxBfgs;    // For BFGS only
     double deltaPPn;        // For PPn only
-    bool useClebschGordan;  // For Mn non-change of basis only
+    bool useGaunt;  // For Mn non-change of basis only
 };
 
 struct OUTS

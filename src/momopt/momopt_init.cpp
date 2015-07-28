@@ -61,7 +61,7 @@ double MomOptSolver::init(double dx, double dy)
     checkInput(c_inputDeckReader.getValue("COND_H_MAX_BFGS", &c_condHMaxBfgs), __LINE__);
     checkInput(c_inputDeckReader.getValue("MAX_ITER", &c_maxIter), __LINE__);
     checkInput(c_inputDeckReader.getValue("MAX_BFGS_ITER", &c_maxIterBfgs), __LINE__);
-    checkInput(c_inputDeckReader.getValue("USE_CLEBSCH_GORDAN", &c_useClebschGordan), __LINE__);
+    checkInput(c_inputDeckReader.getValue("USE_GAUNT", &c_useGaunt), __LINE__);
     checkInput(c_inputDeckReader.getValue("THETA", &c_theta), __LINE__);
     checkInput(c_inputDeckReader.getValue("DELTA_PPN", &c_deltaPPn), __LINE__);
     checkInput(c_inputDeckReader.getValue("MOMENT_TYPE", &c_momentType), __LINE__);
@@ -89,7 +89,7 @@ double MomOptSolver::init(double dx, double dy)
     c_numMoments    = (momentOrder + 1) * (momentOrder + 2) / 2;
     c_numManyMoments = (momentOrder + 1) * (momentOrder + 2) / 2;
     c_vectorSize    = c_numMoments;
-    if(c_useClebschGordan == 1)
+    if(c_useGaunt == 1)
         c_numManyMoments = (2 * momentOrder + 1) * (2 * momentOrder + 2) / 2;
     
     
@@ -191,7 +191,7 @@ double MomOptSolver::init(double dx, double dy)
 
             // distribute measure at each level equally among 2N azimuthal points
             int N = momentOrder + 1;
-            if(c_useClebschGordan == 1)
+            if(c_useGaunt == 1)
                 N = 2 * momentOrder + 1;
             for(int n = 0; n < N; n++)
             {
@@ -217,8 +217,8 @@ double MomOptSolver::init(double dx, double dy)
     }
     
     
-    // Solve for the clebsch-gordan coefficients.
-    if(c_useClebschGordan == 1)
+    // Solve for the Gaunt coefficients.
+    if(c_useGaunt == 1)
     {
         g_hStruct = new HStruct[c_numMoments * c_numMoments];
         for(int i = 0; i < c_numMoments * c_numMoments; i++)

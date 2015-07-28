@@ -60,7 +60,7 @@ private:
     double c_deltaPPn;
     double c_condHMax;
     double c_condHMaxBfgs;
-    int c_useClebschGordan;
+    int c_useGaunt;
     double c_tolerance;
     int c_maxIter;
     int c_maxIterBfgs;

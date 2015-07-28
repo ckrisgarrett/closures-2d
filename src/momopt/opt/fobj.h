@@ -8,7 +8,7 @@
 #define __FOBJ_H
 
 
-// Global variable for clebsh-gordan coefficients.
+// Global variable for Gaunt coefficients.
 struct HStructData
 {
     int moment;
@@ -24,8 +24,8 @@ extern HStruct *g_hStruct;
 
 void initFobj(int numOmpThreads, int numManyMoments);
 double fobjMn(int n1, int n2, int nq, double *alpha, double *u, double *w, double *p, 
-              double *g, double *h, bool useClebschGordan);
+              double *g, double *h, bool useGaunt);
 double fobjPPn(int n1, int n2, int nq, double *alpha, double *u, double *w, double *p, double delta, 
-               double *g, double *h, bool useClebschGordan);
+               double *g, double *h, bool useGaunt);
 
 #endif

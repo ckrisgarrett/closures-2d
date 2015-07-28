@@ -206,7 +206,7 @@ void MomOptSolver::solveOptimization()
         options.condHMax = c_condHMax;
         options.condHMaxBfgs = c_condHMaxBfgs;
         options.deltaPPn = c_deltaPPn;
-        options.useClebschGordan = (c_useClebschGordan == 1) ? true : false;
+        options.useGaunt = (c_useGaunt == 1) ? true : false;
         
         OUTS outs;
         switch(c_optType)

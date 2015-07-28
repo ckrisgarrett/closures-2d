@@ -13,7 +13,7 @@
 #endif
 
 
-HStruct *g_hStruct;     // Global variable for Clebsch-Gordan coefficients.
+HStruct *g_hStruct;     // Global variable for Gaunt coefficients.
 static double *gExtendedForAllThreads;
 
 
@@ -32,7 +32,7 @@ void initFobj(int numOmpThreads, int numManyMoments)
 //__attribute__ ((noinline))  // This is here to aid in profiling.
 static
 void solveHMn(int nm, int np2, int nq, double *alpha, double *w, double *p, 
-              double *h, bool useClebschGordan)
+              double *h, bool useGaunt)
 {
     int threadId = 0;
     double *gExtended;
@@ -66,7 +66,7 @@ void solveHMn(int nm, int np2, int nq, double *alpha, double *w, double *p,
 
         
         // Compute H.
-        if(useClebschGordan)
+        if(useGaunt)
         {
             for(int k = 0; k < np2; k++)
             {
@@ -89,7 +89,7 @@ void solveHMn(int nm, int np2, int nq, double *alpha, double *w, double *p,
     
     
     // Finish the computations.
-    if(useClebschGordan)
+    if(useGaunt)
     {
         for(int i = 0; i < nm; i++)
         {
@@ -124,7 +124,7 @@ void solveHMn(int nm, int np2, int nq, double *alpha, double *w, double *p,
 //__attribute__ ((noinline))  // This is here to aid in profiling.
 static
 void solveHPPn(int nm, int np2, int nq, double *alpha, double *w, double *p, double delta, 
-               double *h, bool useClebschGordan)
+               double *h, bool useGaunt)
 {
     int threadId = 0;
     double *gExtended;
@@ -165,7 +165,7 @@ void solveHPPn(int nm, int np2, int nq, double *alpha, double *w, double *p, dou
 
         
         // Compute H.
-        if(useClebschGordan)
+        if(useGaunt)
         {
             for(int k = 0; k < np2; k++)
             {
@@ -188,7 +188,7 @@ void solveHPPn(int nm, int np2, int nq, double *alpha, double *w, double *p, dou
     
     
     // Finish the computations.
-    if(useClebschGordan)
+    if(useGaunt)
     {
         for(int i = 0; i < nm; i++)
         {
@@ -234,7 +234,7 @@ void solveHPPn(int nm, int np2, int nq, double *alpha, double *w, double *p, dou
     If h != NULL, then g is assumed not NULL.
 */
 double fobjMn(int nm, int np2, int nq, double *alpha, double *u, double *w, double *p, 
-              double *g, double *h, bool useClebschGordan)
+              double *g, double *h, bool useGaunt)
 {
     double f = 0;
     
@@ -242,7 +242,7 @@ double fobjMn(int nm, int np2, int nq, double *alpha, double *u, double *w, doub
     // If H != NULL, then get all the information for f and g from H.
     if(h != NULL)
     {
-        solveHMn(nm, np2, nq, alpha, w, p, h, useClebschGordan);
+        solveHMn(nm, np2, nq, alpha, w, p, h, useGaunt);
         
         if(g != NULL)
         {
@@ -322,7 +322,7 @@ double fobjMn(int nm, int np2, int nq, double *alpha, double *u, double *w, doub
     If h != NULL, then g is assumed not NULL.
 */
 double fobjPPn(int nm, int np2, int nq, double *alpha, double *u, double *w, double *p, double delta, 
-               double *g, double *h, bool useClebschGordan)
+               double *g, double *h, bool useGaunt)
 {
     double f = 0;
     if(g != NULL)
@@ -372,7 +372,7 @@ double fobjPPn(int nm, int np2, int nq, double *alpha, double *u, double *w, dou
     // Compute H.
     if(h != NULL)
     {
-        solveHPPn(nm, np2, nq, alpha, w, p, delta, h, useClebschGordan);
+        solveHPPn(nm, np2, nq, alpha, w, p, delta, h, useGaunt);
     }
 
 
