@@ -12,11 +12,20 @@
 #ifdef USE_PAPI
 #include <papi.h>
 
-#define PAPI_NUM_EVENTS 11
+#define PAPI_NUM_EVENTS 20
 const int papi_event_list[] = {
-    PAPI_L1_TCM,
-    PAPI_L2_TCM,
-    PAPI_L3_TCM,
+    PAPI_L1_DCH,
+    PAPI_L1_DCM,
+    PAPI_L1_ICH,
+    PAPI_L1_ICM,
+    PAPI_L2_DCH,
+    PAPI_L2_DCM,
+    PAPI_L2_ICH,
+    PAPI_L2_ICM,
+    PAPI_L3_DCH,
+    PAPI_L3_DCM,
+    PAPI_L3_ICH,
+    PAPI_L3_ICM,
     PAPI_INT_INS,
     PAPI_FP_INS,
     PAPI_FP_OPS,

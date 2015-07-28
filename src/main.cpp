@@ -195,11 +195,11 @@ int main(int argc, char **argv)
     for(int i = 0; i < PAPI_NUM_EVENTS; i++) {
         if(PAPI_query_event(papi_event_list[i]) == PAPI_OK) {
             if(PAPI_add_event(solver->c_papi_event_set, papi_event_list[i]) != PAPI_OK) {
-                printf("PAPI couldn't add event\n");
-                utils_abort();
+                printf("PAPI couldn't add event %x\n", papi_event_list[i]);
+            } else {
+                solver->c_papi_events[solver->c_papi_event_count] = papi_event_list[i];
+                solver->c_papi_event_count++;
             }
-            solver->c_papi_events[solver->c_papi_event_count] = papi_event_list[i];
-            solver->c_papi_event_count++;
         }
     }
 
