@@ -7,6 +7,10 @@
 #include "kinetic_solver.h"
 #include <string.h>
 
+#ifdef USE_PAPI
+#include "../profiling.h"
+#endif
+
 
 /*
     Get boundary sizes in bytes.
@@ -27,6 +31,10 @@ int KineticSolver::getBoundarySizeY()
 */
 void KineticSolver::getInnerBoundaries(char *north, char *south, char *east, char *west)
 {
+    #ifdef USE_PAPI
+    profile_start_update("KineticSolver::getInnerBoundaries");
+    #endif
+
     int x1 = c_gX[1];
     int x2 = c_gX[2] + 1 - NUM_GHOST_CELLS;
     int y1 = c_gY[1];
@@ -92,6 +100,10 @@ void KineticSolver::getInnerBoundaries(char *north, char *south, char *east, cha
             }
         }
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("KineticSolver::getInnerBoundaries");
+    #endif
 }
 
 
@@ -100,6 +112,10 @@ void KineticSolver::getInnerBoundaries(char *north, char *south, char *east, cha
 */
 void KineticSolver::setOuterBoundaries(char *north, char *south, char *east, char *west)
 {
+    #ifdef USE_PAPI
+    profile_start_update("KineticSolver::setOuterBoundaries");
+    #endif
+
     int x0 = c_gX[0];
     int x3 = c_gX[2] + 1;
     int y0 = c_gY[0];
@@ -165,10 +181,18 @@ void KineticSolver::setOuterBoundaries(char *north, char *south, char *east, cha
             }
         }
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("KineticSolver::setOuterBoundaries");
+    #endif
 }
 
 void KineticSolver::duplicateBoundaries()
 {
+    #ifdef USE_PAPI
+    profile_start_update("KineticSolver::duplicateBoundaries");
+    #endif
+
     int x0 = c_gX[0];
     int x1 = c_gX[1];
     int x2 = c_gX[2] + 1 - NUM_GHOST_CELLS;
@@ -193,4 +217,8 @@ void KineticSolver::duplicateBoundaries()
         c_kinetic[I3D(i,y0+j,q)] = c_kinetic[I3D(i,y2+j,q)];
         c_kinetic[I3D(i,y3+j,q)] = c_kinetic[I3D(i,y1+j,q)];
     }}}
+
+    #ifdef USE_PAPI
+    profile_finish_update("KineticSolver::duplicateBoundaries");
+    #endif
 }

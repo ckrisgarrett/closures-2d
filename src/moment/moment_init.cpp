@@ -294,7 +294,5 @@ double MomentSolver::init(double dx, double dy)
     free(quadWeights);
     free(xi);
     free(eta);
-
-
     return maxDt;
 }

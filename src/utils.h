@@ -9,44 +9,6 @@
 
 #include <stdio.h>
 
-#ifdef USE_PAPI
-#include <papi.h>
-
-#define PAPI_NUM_EVENTS 20
-const int papi_event_list[] = {
-    PAPI_L1_DCH,
-    PAPI_L1_DCM,
-    PAPI_L1_ICH,
-    PAPI_L1_ICM,
-    PAPI_L2_DCH,
-    PAPI_L2_DCM,
-    PAPI_L2_ICH,
-    PAPI_L2_ICM,
-    PAPI_L3_DCH,
-    PAPI_L3_DCM,
-    PAPI_L3_ICH,
-    PAPI_L3_ICM,
-    PAPI_INT_INS,
-    PAPI_FP_INS,
-    PAPI_FP_OPS,
-    PAPI_SP_OPS,
-    PAPI_DP_OPS,
-    PAPI_VEC_INS,
-    PAPI_VEC_SP,
-    PAPI_VEC_DP
-};
-
-typedef struct _PAPI_info {
-    long long iterations;
-    long long cycles;
-    long long nsecs;
-    long long values[PAPI_NUM_EVENTS];
-    long long _prev_cycles;
-    long long _prev_nsecs;
-    long long _prev_values[PAPI_NUM_EVENTS];
-} PAPI_info_t;
-#endif
-
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))

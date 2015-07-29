@@ -27,10 +27,6 @@ public:
     
     int getNumGhostCells() { return 2; }
 
-    #ifdef USE_PAPI
-    void papi_output();
-    #endif
-
 private:
     static const int NUM_GHOST_CELLS = 2;
     

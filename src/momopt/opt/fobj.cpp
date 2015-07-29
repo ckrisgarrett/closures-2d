@@ -12,6 +12,9 @@
 #include <omp.h>
 #endif
 
+#ifdef USE_PAPI
+#include "../../profiling.h"
+#endif
 
 HStruct *g_hStruct;     // Global variable for Gaunt coefficients.
 static double *gExtendedForAllThreads;
@@ -34,6 +37,10 @@ static
 void solveHMn(int nm, int np2, int nq, double *alpha, double *w, double *p, 
               double *h, bool useGaunt)
 {
+    #ifdef USE_PAPI
+    profile_start_update("solveHMn");
+    #endif
+
     int threadId = 0;
     double *gExtended;
     
@@ -115,6 +122,10 @@ void solveHMn(int nm, int np2, int nq, double *alpha, double *w, double *p,
             }
         }
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("solveHMn");
+    #endif
 }
 
 
@@ -126,6 +137,10 @@ static
 void solveHPPn(int nm, int np2, int nq, double *alpha, double *w, double *p, double delta, 
                double *h, bool useGaunt)
 {
+    #ifdef USE_PAPI
+    profile_start_update("solveHPPn");
+    #endif
+
     int threadId = 0;
     double *gExtended;
     
@@ -214,6 +229,10 @@ void solveHPPn(int nm, int np2, int nq, double *alpha, double *w, double *p, dou
             }
         }
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("solveHPPn");
+    #endif
 }
 
 
@@ -236,6 +255,10 @@ void solveHPPn(int nm, int np2, int nq, double *alpha, double *w, double *p, dou
 double fobjMn(int nm, int np2, int nq, double *alpha, double *u, double *w, double *p, 
               double *g, double *h, bool useGaunt)
 {
+    #ifdef USE_PAPI
+    profile_start_update("fobjMn");
+    #endif
+
     double f = 0;
     
     
@@ -255,6 +278,10 @@ double fobjMn(int nm, int np2, int nq, double *alpha, double *u, double *w, doub
         f = h[0] / (p[0] * p[0]);
         for(int i = 0; i < nm; i++)
             f = f - alpha[i] * u[i];
+        
+        #ifdef USE_PAPI
+        profile_finish_update("fobjMn");
+        #endif
         
         return f;
     }
@@ -300,6 +327,10 @@ double fobjMn(int nm, int np2, int nq, double *alpha, double *u, double *w, doub
         f = f - alpha[i] * u[i];
     }
 
+    #ifdef USE_PAPI
+    profile_finish_update("fobjMn");
+    #endif
+
     return f;
 }
 
@@ -324,6 +355,10 @@ double fobjMn(int nm, int np2, int nq, double *alpha, double *u, double *w, doub
 double fobjPPn(int nm, int np2, int nq, double *alpha, double *u, double *w, double *p, double delta, 
                double *g, double *h, bool useGaunt)
 {
+    #ifdef USE_PAPI
+    profile_start_update("fobjPPn");
+    #endif
+
     double f = 0;
     if(g != NULL)
     {
@@ -384,6 +419,10 @@ double fobjPPn(int nm, int np2, int nq, double *alpha, double *u, double *w, dou
         if(g != NULL)
             g[i] = g[i] - u[i];
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("fobjPPn");
+    #endif
 
     return f;
 }

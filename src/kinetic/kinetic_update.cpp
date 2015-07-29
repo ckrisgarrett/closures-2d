@@ -10,6 +10,9 @@
 #include <math.h>
 #include <stdlib.h>
 
+#ifdef USE_PAPI
+#include "../profiling.h"
+#endif
 
 /*
     Returns 0 if xy < 1
@@ -38,7 +41,7 @@ static double slopefit(double left, double center, double right, double theta)
 void KineticSolver::solveFlux(double *kinetic, double *flux, double dx, double dy)
 {
     #ifdef USE_PAPI
-    papi_start_update(&c_flux_info);
+    profile_start_update("KineticSolver::solveFlux");
     #endif
     int numX = c_gX[3] - c_gX[0] + 1;
     int numY = c_gY[3] - c_gY[0] + 1;
@@ -106,7 +109,7 @@ void KineticSolver::solveFlux(double *kinetic, double *flux, double dx, double d
         }
     }
     #ifdef USE_PAPI
-    papi_finish_update(&c_flux_info);
+    profile_finish_update("KineticSolver::solveFlux");
     #endif
 }
 
@@ -116,10 +119,6 @@ void KineticSolver::solveFlux(double *kinetic, double *flux, double dx, double d
 */
 void KineticSolver::update(double dt, double dx, double dy)
 {
-    #ifdef USE_PAPI
-    papi_start_update(&c_update_info);
-    #endif
-
     static bool firstTime = true;
     static double *kineticOld;
     if(firstTime)
@@ -129,6 +128,9 @@ void KineticSolver::update(double dt, double dx, double dy)
             c_numQuadPoints * sizeof(double));
     }
     
+    #ifdef USE_PAPI
+    profile_start_update("KineticSolver::update");
+    #endif
     
     // Copy initial grid for use later.
     for(int i = c_gX[1]; i <= c_gX[2]; i++)
@@ -228,7 +230,7 @@ void KineticSolver::update(double dt, double dx, double dy)
     }
 
     #ifdef USE_PAPI
-    papi_finish_update(&c_update_info);
+    profile_finish_update("KineticSolver::update");
     #endif
 }
 

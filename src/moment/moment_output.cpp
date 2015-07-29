@@ -57,8 +57,3 @@ void MomentSolver::outputData(double time)
     fclose(file);
 }
 
-#ifdef USE_PAPI
-void MomentSolver::papi_output() {
-    
-}
-#endif

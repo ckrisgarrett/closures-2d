@@ -12,6 +12,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef USE_PAPI
+#include "../../profiling.h"
+#endif
 
 static
 void optScaled(int nm, int nm2, int nq, double *u, double *alpha, double *w, double *p, 
@@ -151,6 +154,10 @@ void opt(int nm, int nm2, int nq, double *u, double *alpha, OPTIONS options, dou
 void optScaled(int nm, int nm2, int nq, double *u, double *alpha, double *w, double *p, 
                OPTIONS *options, OUTS *outs)
 {
+    #ifdef USE_PAPI
+    profile_start_update("opt.cpp: optScaled");
+    #endif
+
     double f = 0;
     double *d = (double*)malloc(nm * sizeof(double));
     double *cholesky = (double*)malloc(nm * nm * sizeof(double));
@@ -320,6 +327,10 @@ void optScaled(int nm, int nm2, int nq, double *u, double *alpha, double *w, dou
         outs->normG = err;
         outs->r = r;
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("opt.cpp: optScaled");
+    #endif
 
     
     free(d);

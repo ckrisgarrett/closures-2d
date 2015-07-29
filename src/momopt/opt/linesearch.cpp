@@ -11,6 +11,9 @@
 #include <float.h>
 #include <stdlib.h>
 
+#ifdef USE_PAPI
+#include "../../profiling.h"
+#endif
 
 /*
     Find alpha which decreases f.
@@ -18,6 +21,10 @@
 double linesearch(int n1, int n2, int nq, double *alpha, double *d, double f, double *g, 
                   double *u, double *w, double *p, double ppnDelta, int momentType)
 {
+    #ifdef USE_PAPI
+    profile_start_update("linesearch");
+    #endif
+
     double t = 1.0;
     double fNew = f;
     double *alphaOld = (double*)malloc(n1 * sizeof(double));
@@ -82,6 +89,12 @@ double linesearch(int n1, int n2, int nq, double *alpha, double *d, double f, do
     for(int i = 0; i < n1; i++)
         alpha[i] = alphaOld[i];
     free(alphaOld);
+    
+    
+    #ifdef USE_PAPI
+    profile_finish_update("linesearch");
+    #endif
+
     return 0.0;
 }
 

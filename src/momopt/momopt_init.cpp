@@ -264,7 +264,6 @@ double MomOptSolver::init(double dx, double dy)
     gsl_vector_free(mu);
     gsl_vector_free(phi);
 
-
     // Let functions initialize.
     initUpdate(c_numMoments);
     initFobj(c_numOmpThreads, c_numManyMoments);

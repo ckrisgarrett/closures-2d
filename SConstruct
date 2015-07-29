@@ -43,6 +43,7 @@ cxx = Environment(CXX=config.cxx_compiler, CCFLAGS=config.cxx_flags,
 
 if GetOption("papi"):
     cxx.AppendUnique(LIBS=["papi"], CPPDEFINES=["USE_PAPI"])
+    src_files.append("profiling.cpp")
 
 if GetOption("mpi"):
     mpic = cxx.Clone(CXX=config.mpi_compiler)

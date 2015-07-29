@@ -57,8 +57,3 @@ void DnSolver::outputData(double time)
     fclose(file);
 }
 
-#ifdef USE_PAPI
-void DnSolver::papi_output() {
-    
-}
-#endif

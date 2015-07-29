@@ -24,10 +24,6 @@ public:
     
     int getNumGhostCells() { return 2; }
 
-    #ifdef USE_PAPI
-    void papi_output();
-    #endif
-
 private:
     enum
     {

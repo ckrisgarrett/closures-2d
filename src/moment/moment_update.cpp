@@ -11,12 +11,19 @@
 #include <stdlib.h>
 #include "../utils.h"
 
+#ifdef USE_PAPI
+#include "../profiling.h"
+#endif
 
 /*
     Scales moments on the entire grid.
 */
 void MomentSolver::scaleMoments(double *moments)
 {
+    #ifdef USE_PAPI
+    profile_start_update("MomentSolver::scaleMoments");
+    #endif
+
     for(int i = c_gX[1]; i <= c_gX[2]; i++)
     {
         for(int j = c_gY[1]; j <= c_gY[2]; j++)
@@ -27,6 +34,10 @@ void MomentSolver::scaleMoments(double *moments)
             }
         }
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("MomentSolver::scaleMoments");
+    #endif
 }
 
 
@@ -47,6 +58,9 @@ void MomentSolver::solveFlux(double *moments, double *flux, double dx, double dy
         northSouthFluxVectors = (double*)malloc(c_numMoments * c_numOmpThreads * sizeof(double));
     }
     
+    #ifdef USE_PAPI
+    profile_start_update("MomentSolver::solveFlux");
+    #endif
     
     int numX = c_gX[3] - c_gX[0] + 1;
     int numY = c_gY[3] - c_gY[0] + 1;
@@ -127,6 +141,10 @@ void MomentSolver::solveFlux(double *moments, double *flux, double dx, double dy
             flux[I3D(i,j,k)] = 1.0 / dx * eastWestFlux[k] + 1.0 / dy * northSouthFlux[k];
         }
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("MomentSolver::solveFlux");
+    #endif
 }
 
 
@@ -143,7 +161,10 @@ void MomentSolver::update(double dt, double dx, double dy)
         momentsOld = (double*)malloc((c_gX[3]-c_gX[0]+1) * (c_gY[3]-c_gY[0]+1) * 
             c_numMoments * sizeof(double));
     }
-    
+
+    #ifdef USE_PAPI
+    profile_start_update("MomentSolver::update");
+    #endif
     
     // Copy initial grid for use later.
     for(int i = c_gX[1]; i <= c_gX[2]; i++)
@@ -227,6 +248,10 @@ void MomentSolver::update(double dt, double dx, double dy)
             }
         }
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("MomentSolver::update");
+    #endif
 }
 
 

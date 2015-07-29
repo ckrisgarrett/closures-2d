@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include <math.h>
 
+#ifdef USE_PAPI
+#include "../profiling.h"
+#endif
 
 // Temporary variables.
 static double *ansatzGrid;
@@ -31,6 +34,10 @@ void MomOptSolver::initUpdate(int numMoments)
 */
 double MomOptSolver::computeAnsatz(double *alpha, int q)
 {
+    #ifdef USE_PAPI
+    profile_start_update("MomOptSolver::computeAnsatz");
+    #endif
+
     double kinetic = 0.0;
     for(int k = 0; k < c_numMoments; k++)
     {
@@ -49,6 +56,10 @@ double MomOptSolver::computeAnsatz(double *alpha, int q)
             printf("computeAnsatz: momentType not in range\n");
             utils_abort();
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("MomOptSolver::computeAnsatz");
+    #endif
 
     // Should never reach this point.
     return 0.0;
@@ -85,6 +96,9 @@ void MomOptSolver::solveFlux(double *moments, double *flux, double *alpha, doubl
     int numY = c_gY[3] - c_gY[0] + 1;
     int numGridPoints = numX * numY;
     
+    #ifdef USE_PAPI
+    profile_start_update("MomOptSolver::solveFlux");
+    #endif
     
     // Zero flux.
     for(int i = c_gX[1]; i <= c_gX[2]; i++)
@@ -178,6 +192,10 @@ void MomOptSolver::solveFlux(double *moments, double *flux, double *alpha, doubl
             }
         }
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("MomOptSolver::solveFlux");
+    #endif
 }
 
 
@@ -270,6 +288,9 @@ void MomOptSolver::update(double dt, double dx, double dy)
             c_numMoments * sizeof(double));
     }
     
+    #ifdef USE_PAPI
+    profile_start_update("MomOptSolver::update");
+    #endif
     
     // Copy initial grid for use later.
     for(int i = c_gX[1]; i <= c_gX[2]; i++)
@@ -351,5 +372,9 @@ void MomOptSolver::update(double dt, double dx, double dy)
             }
         }
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("MomOptSolver::update");
+    #endif
 }
 

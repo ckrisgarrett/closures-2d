@@ -11,12 +11,19 @@
 #include <stdlib.h>
 #include "../utils.h"
 
+#ifdef USE_PAPI
+#include "../profiling.h"
+#endif
 
 /*
     Solves for the flux at each grid cell.
 */
 void DnSolver::solveFlux(double *moments, double *flux, double dx, double dy)
 {
+    #ifdef USE_PAPI
+    profile_start_update("DnSolver::solveFlux");
+    #endif
+
     static bool firstTime = true;
     static double *tempVectors;
     static double *eastWestFluxVectors;
@@ -157,6 +164,10 @@ void DnSolver::solveFlux(double *moments, double *flux, double dx, double dy)
             }
         }
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("DnSolver::solveFlux");
+    #endif
 }
 
 
@@ -165,6 +176,10 @@ void DnSolver::solveFlux(double *moments, double *flux, double dx, double dy)
 */
 void DnSolver::update(double dt, double dx, double dy)
 {
+    #ifdef USE_PAPI
+    profile_start_update("DnSolver::update");
+    #endif
+
     static bool firstTime = true;
     static double *momentsOld;
     if(firstTime)
@@ -252,5 +267,9 @@ void DnSolver::update(double dt, double dx, double dy)
             }
         }
     }
+
+    #ifdef USE_PAPI
+    profile_finish_update("DnSolver::update");
+    #endif
 }
 
