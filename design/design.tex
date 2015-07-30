@@ -9,7 +9,7 @@
 \usepackage[section]{placeins}
 \usepackage{nth}
 \usepackage{xspace}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{defs}
 \usepackage{fonts}
 
@@ -101,14 +101,6 @@ is the direction of travel, $\sigma_t(x) \geq \sigma_s(x)$ are the total and sca
 \integral{\cdot} is shorthand for integration over \twosphere.
 The boundary conditions implemented are either zero inflow boundary conditions or periodic boundary conditions depending on the initial condition discussed in Section~\ref{subsec:initcond}.
 
-%The \kinetic solver directly computes solutions to
-%Equation~\ref{eqn:kinetic}, while the \moment solver calculates solutions based on
-%the spherical harmonic basis functions. The \momopt solver includes additional
-%optimizations and experimental features. This program explicitly computes approximate
-%solutions to Equation~\ref{eqn:kinetic} as
-%the system evolves from one of several initial conditions, defined in
-%Section~\ref{sec:initcond}.
-
 \subsection{Initial Conditions}
 \label{subsec:initcond}
 \FloatBarrier
@@ -125,19 +117,24 @@ In the Gaussian initial condition, a two dimensional Gaussian function
 is placed with its peak at the center of the grid. Each point on the
 initial grid is set to
 \begin{equation}
-    f(x,y,\Omega,0) = \max \left( \frac{1}{2 \pi \sigma_g^2} e^{-(x^2 + y^2) / (2 \sigma_g^2)}, \texttt{floor} \right), 
+    f(x,y,\Omega,t=0) = \max \left( \frac{1}{2 \pi \sigma_g^2} e^{-(x^2 + y^2) / (2 \sigma_g^2)}, \texttt{floor} \right), 
 \end{equation}
 where $\sigma_g$ is set by the user.
 The cross sections $\sigma_s$ and $\sigma_t$ are constants defined by the user.
 The zero inflow boundary condition is used.
-Figure~\ref{fig:gaussian_ic} shows the initial condition of $\vint{f}$ for $\sigma_g = ???$. 
-\comment{Follow this pattern for other initial conditions.}
+Figure~\ref{fig:gaussian_ic} shows the initial condition of $\vint{f}$ for $\sigma_g = 0.4$. 
 
 \subsubsection{Delta Initial Condition}
-The limiting case, as $\sigma \to 0$, is the
-Delta initial condition. For this condition, the centermost cell is set to
-$\frac{1}{\Delta x \Delta y}$ where $\Delta x$ and $\Delta y$ are the cell
-dimensions. $\sigma_S$ and $\sigma_T$ are uniformly set to the configured
+The limiting case, as $\sigma \to 0$, is the Delta initial condition.
+This condition is meant to simulate an initial pulse of particles distributed
+isotropically along an infinite line in space. The points on the initial grid
+are initialized to
+\begin{equation}
+    f(x,y,\Omega,t=0) = \frac{1}{4\pi} \delta(x,y),
+\end{equation}
+approximating an infinitely narrow source at the origin. \comment{The source
+doesn't have the $\frac{1}{4\pi}$ factor, is it introduced by scaling later?}
+$\sigma_S$ and $\sigma_T$ are uniformly set to the configured
 value for sigma.
 
 \subsubsection{Lattice Initial Condition}
@@ -148,13 +145,13 @@ value for sigma.
     \label{fig:lattice_ic}
 \end{figure}
 The Lattice initial condition corresponds to a checker board pattern
-of highly scattering and highly absorbing regions. This configuration is reminiscent of a
+of highly scattering and highly absorbing regions~\cite{Brunner-Holloway-2005,Brunner-2002}.
+This configuration is reminiscent of a
 small section of a nuclear reactor core. The Lattice initial condition leaves the
 grid initially empty, but has the most complicated scattering pattern of the initial
 conditions. $\sigma_S$ and $\sigma_T$ are set to 1 at all positions, except
 for several blocks arranged throughout the grid at which $\sigma_S=0$ and
 $\sigma_T=10$.
-\comment{State the source too.}
 
 \subsubsection{Smooth Initial Condition}
 \begin{figure}
@@ -167,7 +164,7 @@ The Smooth initial condition is primarily intended for testing convergence.
 This configuration initializes the grid points with a periodic boundary.
 Each point in the initial grid is set to
 \begin{align}
-1 + \sin(2\pi x)\cos(2\pi y).
+f(x,y,\Omega,t=0) = 1 + \sin(2\pi x)\cos(2\pi y).
 \end{align}
 $\sigma_S$ and $\sigma_T$ are uniformly set to the configured
 value for sigma.
@@ -268,7 +265,7 @@ Various filters can also be applied to suppress oscillations in spherical harmon
         F(n/(N+1))^s.
     \end{equation}
 
-    \item The Lanczos filter is taken from (insert citation).
+    \item The Lanczos filter is taken from~\cite{Radice-2013}.
     Again with moment order $N$ and filter tune $\sigma_e$, let
     \begin{equation}
         s = \frac{-\sigma_e \Delta t}{\log L(N / (N+1))}
@@ -291,7 +288,6 @@ One serious drawback of the P$_N$ method is the possibility of non-realizable
 solutions with negative densities, oscillatory approximations of nonsmooth
 solutions. 
 \comment{Can just put the definitions for $\eta$ and other stuff here for M$_N$ and PP$_N$.}
-\comment{Also, the link boxes are useful but ugly.  Get rid of them.}
 
 Nonlinear approaches can ensure positivity,
 but come with increased complexity and computational cost. In general,
@@ -345,11 +341,50 @@ spaced around a circle and $n$ values of $z$. This structure could allow the
 evaluation of integrals via the Chebyshev-Legendre quadrature to be optimized
 more easily than the Lebedev quadrature, which is arranged nontrivially and
 becomes denser with increasing order.
-\comment{Write in implementation here.  Not in appendix.}
+
+The fixed-order
+Gauss-Legendre integration points and weights from GSL will be referred to as $\mu_i$,
+and $w_i$, respectively. Next, the
+azimuthal angles of quadrature, $\phi_k$, are calculated as
+\begin{equation}
+    \phi_k = \frac{(k + 0.5)\pi}{Q}
+\end{equation}
+for $k \in \Z$ and quadrature order $Q$ such that $0 \leq k < 2Q$,
+placing $2Q$ points evenly around the unit circle, and
+the points are mapped into cylindrical coordinates $\xi_i,\eta_i$.
+
+For $q_1,q_2$ such that $0 \leq q_1 < Q / 2$ and
+$0 \leq q_2 < 2Q$, let
+$i = 2q_1Q + q_2$. Now 
+\begin{align}
+    W_i &= \frac{2\pi w_{q_1}}Q \\
+    \xi_i &= \sqrt{1 - \mu_{q_1}^2} \cos \phi_{q_2} \\
+    \eta_i &= \sqrt{1 - \mu_{q_1}^2} \sin \phi_{q_2}.
+\end{align}
+
+Once the quadrature points and weights are computed, each integral over \twosphere
+can be calculated as
+\begin{equation}
+    \int_{\twosphere} f(x,y,\Omega,t) \dif \Omega = \sum _{i=1}^Q W_i f(x,y,\omega_i,t)
+\end{equation}
+where $\omega_i$ is the direction $(\xi_i,\eta_i)$.
+
+\subsection{Flux Calculations}
+\comment{Is this worth including/expanding?}
+All the solvers compute flux by examining values of neighboring cells in the
+$x$ and $y$ directions.  The exact operations vary with each solver.
 
 \subsection{Time}
 Time steps are carried out via Heun's method which is an explicit two-stage Runge-Kutta method that is second order accurate. 
-\comment{Write equation.}
+If $f(x,y,\Omega,t)$ is the density a a given position, direction, and time,
+then we apply two time steps in succession to obtain a first approximation
+$\tilde{f}(x,y,\Omega,t+2\Delta t)$. Now the calculated time step is
+the average of the approximation and the starting value, that is
+\begin{equation}
+f(x,y,\Omega,t+\Delta t) = \frac{1}{2}\left(
+        f(x,y,\Omega,t) + \tilde{f}(x,y,\Omega,t+2\Delta t)
+    \right).
+\end{equation}
 Notice Heun's method is the average of two Euler steps which puts it into the category of a strong stability preserving (SSP) method.
 SSP methods preserve properties satisfied by the Euler method.
 In particular, the software uses this method to ensure positivity for some methods.
@@ -363,10 +398,37 @@ At each update, the program first computes the flux at each cell, then updates
 the cell values according to the kinetic transport equation. Several of the
 solvers guarantee positivity on the grid.
 
+\comment{The minmod preserves positivity.  Need to show this.}
+Some of the solvers employ a double minmod slope limiter to reduce oscillations
+introduced by the spatial scheme. This function is defined as
+\begin{equation}
+    \minmod (x, y) = \sgn'(x) \max\left(0, \min\left(|x|, y \sgn'(x)\right)\right)
+\end{equation}
+where
+\begin{equation}
+    \sgn'(x) =
+    \begin{dcases*}
+        1  & if $x \geq 0$ \\
+        -1 & if $x < 0$.
+    \end{dcases*}
+\end{equation}
+In particular, note that $\minmod (x,y)$ is
+\begin{itemize}
+    \item 0 if $xy < 1$
+    \item $\min\{x, y\}$ if $x,y > 0$
+    \item $-\min\{|x|, |y|\}$ if $x,y < 0$.
+\end{itemize}
+
 For the \kinetic solver (implementing $S_N$), the timestep
 $\Delta t$ is chosen with respect to the cell size so as not to violate
-the CFL condition. To eliminate the possibility of negative density due
-to scattering, an additional term is included in the CFL check. % check on this
+the CFL condition:
+\begin{equation}
+    \Delta t = \frac{c \Delta x \Delta y}{2(\Delta x + \Delta y)}.
+\end{equation}
+where $c$ is the configured CFL factor.
+To eliminate the possibility of negative density due
+to scattering, an additional term is included in the CFL check.
+\comment{Is this implemented, or did we just talk about it?}
 
 The \momopt solver also ensures positivity as part of the flux calculations.
 The flux is based on an ansatz grid with strictly positive values. For $M_N$,
@@ -414,121 +476,6 @@ The solver code has an approximately common layout, e.g. in \texttt{src/moment/}
  \item \texttt{moment\_output.cpp} -- Write out results
 \end{itemize}
 
-\section{Results}
-\dots
-
-\clearpage
-\appendix
-\section{Gritty Details}
-\comment{Most of this should not be here, but rather in the math section.}
-\subsection{\main}
-\label{src:main.cpp}
-The main entry point for the program, \main, is responsible for reading the input
-files dictating runtime behavior, setting up MPI, and running the chosen solver.
-In addition, the grid initialization used by all solvers is defined here, so \main
-controls the grid geometry and initial configuration. Program flow is as follows
-\begin{enumerate}
-    \item Determine the current node and total number of nodes. If MPI support is not
-    compiled in, fall back to default values corresponding to the primary and
-    only node.
-    \item Read in the configuration stored in \inputdeck. This format is
-    described in Section~\ref{file:input.deck}.
-    \item Configure the solver. Solvers are described in Section~\ref{solver}.
-    \item Set the domain of the current node.
-    \item Initialize the grid.
-    \item Run the solver over the specified time interval.
-    \item Output data.
-\end{enumerate}
-
-The default grid initialization, \texttt{Solver::initializeGrid}, also resides
-in \main. At present, all solvers use this
-method. The grid is represented as a two dimensional array of floating point values.
-The grids used in the program are larger than configured in \inputdeck; a border of
-of a specified width of ghost cells is added outside the grid described in the
-configuration. The center points of the cells are used for calculation of
-initial conditions. Figure~\ref{fig:grid} illustrates this layout.
-There are two other arrays of identical size storing $\sigma_S$ and $\sigma_T$
-values. To initialize the grid, first set the the border cells to the
-specified floor value, \floor, and then calculate the initial values for the
-main cells.
-
-\subsubsection{Delta Initial Condition}
-\label{init:delta}
-\comment{Probably need this text somewhere.}
-When \texttt{INITCOND\_LINESOURCE} is specified with Gaussian $\sigma=0$, the
-Delta Initial Condition applies. In this case, $\sigma_S$ and $\sigma_T$ for each
-cell are set to $\sigma$. The cells of the initial grid are set to \floor,
-with the exception of the centermost cell, %TODO check on this, not really sure
-which is set to $1 / \Delta x \Delta y$ where $\Delta x$ and $\Delta y$ denote the
-dimensions of each cell.
-
-\subsubsection{Gaussian Initial Condition}
-\label{init:gauss}
-This condition is used when \texttt{INITCOND\_LINESOURCE} is selected as the the
-initial condition and Gaussian $\sigma \neq 0$. Each cell's initial value is
-set to $\max \{\texttt{gaussianFactor}, \floor\}$ where
-\begin{equation}
-    \mathtt{gaussianFactor} \assign \frac{1}{2\pi\sigma^2}
-        \exp \left(- \frac{x_i^2 + y_j^2}{2\sigma^2}\right).
-\end{equation}
-$\sigma_S$ and $\sigma_T$ for each cell is set to $\sigma$.
-
-\subsubsection{Lattice Initial Condition}
-\label{init:lattice}
-When \texttt{INITCOND\_LATTICE} is specified, each cell's initial value is set to
-\floor, and $\sigma_S,\sigma_T \assign 1$. For any cell $(x_i,y_j)$ with
-\begin{equation}
-    \|(x_i,y_j) - (s_x, s_y)\|_\infty < 0.5
-\end{equation}    
-for some $(s_x,s_y) \in \{$
-    % I don't like switching out of math mode here, but I need the line broken,
-    % and since it's in a paragraph, I'll just leave it like this for now.
-    (2.0,2.0), (2.0,0.0), (2.0,-2.0), (1.0,1.0), (1.0,-1.0),
-    (0.0,-2.0), (-1.0,1.0), (-1.0,-1.0), (-2.0,2.0), (-2.0,0.0), (-2.0,-2.0)
-$\}$, $\sigma_T$ is set to 10 and $\sigma_S$ is set to 0.
-
-\subsubsection{Smooth Periodic Condition}
-\label{init:smooth}
-When \texttt{INITCOND\_PERIODIC} is selected, $\sigma_S, \sigma_T$ are initialized
-to $\sigma$, and the initial value at each point $(x_I,y_j)$ is set to
-\begin{equation}
-    \sin(2\pi x_i) \cos(2\pi y_j) + 1.
-\end{equation}
-
-\begin{figure}
-    \centering
-    \begin{tikzpicture}[decoration={brace, amplitude=5}]
-        \filldraw[fill=gray] (-5,-7) rectangle (5,7);
-        \filldraw[fill=white] (-3,-5) rectangle (3,5);
-        \draw[step=1] (-5,-7) grid (5,7);
-        \draw[decorate] (-5,7.5) -- node[above=5] {\texttt{numGhostCells}} (-3,7.5);
-        \draw[decorate] (5.5,7) -- node[rotate=90,below=5]
-            {\texttt{numGhostCells}} (5.5,5);
-        \draw[decorate] (-3,7.5) -- node[above=5] {\texttt{c\_sizeX}} (3,7.5);
-        \draw[decorate] (5.5,5) -- node[rotate=90,below=5]
-            {\texttt{c\_sizeX}} (5.5,-5);
-        \draw (-5,-7.4) -- (-5,-7.6) node[below] {\texttt{c\_gX[0]}};
-        \draw (-3,-7.4) -- (-3,-7.6) node[below] {\texttt{c\_gX[1]}};
-        \draw (2,-7.4) -- (2,-7.6) node[below] {\texttt{c\_gX[2]}};
-        \draw (4,-7.4) -- (4,-7.6) node[below] {\texttt{c\_gX[3]}};
-        \draw (-5.4,-7) -- (-5.6,-7) node[above,rotate=90] {\texttt{c\_gY[0]}};
-        \draw (-5.4,-5) -- (-5.6,-5) node[above,rotate=90] {\texttt{c\_gY[1]}};
-        \draw (-5.4,4) -- (-5.6,4) node[above,rotate=90] {\texttt{c\_gY[2]}};
-        \draw (-5.4,6) -- (-5.6,6) node[above,rotate=90] {\texttt{c\_gY[3]}};
-        \foreach \x in {-4.5,-3.5,...,4.5}
-        \foreach \y in {-6.5,-5.5,...,6.5}
-            \fill (\x,\y) circle (0.05);
-    \end{tikzpicture}
-
-    \vspace{0.5cm}
-
-    \caption{Grid layout}
-    \label{fig:grid}
-\end{figure}
-
-\subsection{\comm}
-\label{src:comm.cpp}
-\comment{Maybe put how MPI works in Program Layout.  Also put OpenMP stuff in there too so the user knows what is sped up and how.}
 When using MPI, \comm communicates boundary data between nodes.
 \texttt{Solver::getInnerBoundaries} is first called to obtain grid data on the
 boundaries of the current node's region of the domain. Next, each node trades boundary
@@ -537,237 +484,8 @@ data with its neighbors to the north, south, east, then west via
 to update its grid with the data from neighboring nodes.
 \comment{Note scaling has not been tested for MPI.}
 
-\subsection{\utils}
-\label{src:utils.cpp}
-\utils is mostly comprised of IO-related utility functions. In addition, there are
-functions to compute the 1-norm of an arbitrary vector and to compute Gaussian weights and nodes using GSL.
-
-\subsection{\timer}
-\label{src:timer.cpp}
-\timer contains a timer class used in \main to record the time taken by computations.
-
-\section{Solvers}
-\label{solver}
-All solvers must store internal parameters and grid data, and implement methods to
-initialize, query grid parameters, update, and output data. See \texttt{solver.h}
-for more detail. Each solver is organized into a directory containing the necessary
-functionality split across several files. The solvers currently implemented
-are \kinetic, \moment, \momopt, and \dn.
-
-\subsection{\kinetic}
-\label{solver:kinetic}
-\subsubsection{\texttt{kinetic\_init.cpp}}
-\label{src:kinetic_init.cpp}
-\kinetic reads its runtime configuration from the file \kineticdeck
-(see Section~\ref{file:kinetic.deck}). The maximum $\Delta t$ value \texttt{maxDt}
-is calculated as
-\begin{equation} %TODO check on roundabout 1/2
-    \mathtt{maxDt} \assign \frac{1}{2} (\mathtt{cflFactor})
-        \frac{\Delta x \Delta y}{\Delta x + \Delta y}.
-\end{equation}
-The grid is initialized as described in Section~\ref{src:main.cpp}. In addition to
-the grid layers common to all solvers, \kinetic uses two others, \texttt{c\_kinetic}
-and \texttt{c\_flux}. \utils is used
-to get the quadrature as described in Section~\ref{src:utils.cpp}. These fixed-order
-Gauss-Legendre integration points and weights returned will be referred to as $\mu_i$,
-and $w_i$, respectively. Next, the
-azimuthal angles of quadrature, $\phi_k$, are calculated as
-\begin{equation}
-    \phi_k \assign \frac{(k + 0.5)\pi}{\quadorder}
-\end{equation}
-for $k \in \Z$ such that $0 \leq k < 2(\quadorder)$,
-placing $2(\quadorder)$ points evenly around the unit circle.
-The quadrature weights are ultimately stored in
-\texttt{c\_quadWeights}, and the points are mapped into cylindrical coordinates
-and stored in \texttt{c\_xi} and \texttt{c\_eta}.
-%TODO make sure geometric description is correct
-
-For $q_1,q_2$ such that $0 \leq q_1 < (\quadorder) / 2$ and
-$0 \leq q_2 < 2(\quadorder)$, define a quadrature counter
-$q \assign 2(\quadorder)q_1 + q_2$. Now 
-\begin{align}
-    \mathtt{c\_quadWeights[q]} &\assign \frac{2\pi w_{q_1}}{\quadorder} \\
-    \mathtt{c\_xi[q]} &\assign \sqrt{1 - \mu_{q_1}^2} \cos \phi_{q_2} \\
-    \mathtt{c\_eta[q]} &\assign \sqrt{1 - \mu_{q_1}^2} \sin \phi_{q_2}
-\end{align}
-
-\subsubsection{\texttt{kinetic\_update.cpp}}
-\label{src:kinetic_update.cpp}
-The core of the \kinetic solver is the \texttt{update} method defined here. Each
-call to update one time step operates as follows:
-\begin{enumerate}
-    \item Make a copy of the \texttt{c\_kinetic} grid.
-    \item Carry out the first Euler step.
-    \item Carry out the second Euler step.
-    \item Average the initial grid with the results of the second iteration.
-\end{enumerate}
-Some preliminary functions will be used in the discussion of the above steps.
-
-
-\comment{The minmod preserves positivity.  Need to show this.}
-The \texttt{minmod(double x, double y)} function is designed to return
-\begin{itemize}
-    \item 0 if $xy < 1$
-    \item $\min\{x, y\}$ if $x,y > 0$
-    \item $-\min\{|x|, |y|\}$ if $x,y < 0$
-\end{itemize}
-and implemented as follows.
-\begin{equation}
-    \minmod (x, y) = \sgn'(x) \max\left(0, \min\left(|x|, y \sgn'(x)\right)\right)
-\end{equation}
-where
-\begin{equation}
-    \sgn'(x) =
-    \begin{dcases*}
-        1  & if $x \geq 0$ \\
-        -1 & otherwise.
-    \end{dcases*}
-\end{equation}
-
-Additionally,
-\begin{equation}
-    \slopefit(\ell, c, r, \theta) = \minmod\left((r - c)\theta,
-        \minmod\left(\frac{1}{2}(r - \ell), (c-\ell)\theta\right)\right).
-\end{equation}
-
-To carry out each Euler step, the \kinetic solver first communicates the current cell's
-boundaries with neighboring MPI cells (described in
-Section~\ref{src:kinetic_boundaries.cpp}) and then solves flux for the
-cell (described below). For each cell $(i,j)$ in the main grid (excluding the ghost
-cells), the integral of $F$ is calculated as
-\begin{equation}
-    \texttt{integral} \assign
-    \frac{\sigma_{S,(i,j)}}{4\pi} \sum_{q=0}^n w_q f_q(i,j)
-\end{equation}
-where $w_q$ is the calculated quadrature weight for the $q$\textsuperscript{th} point
-of an $n$ point Gauss-Legendre quadrature and
-$f_q(i,j)$ is the value of the \texttt{c\_kinetic} grid at $(i,j,q)$.
-
-For each $0 \leq q < n$, subtract from the value of \texttt{c\_kinetic} at $(i,j,q)$
-\begin{equation} % translate to recurrence relation?
-    \Delta t \left(\sigma_{T,(i,j)} (\mathtt{c\_kinetic})_{(i,j,q)} -
-    \mathtt{integral}\right).
-\end{equation}
-Next, if using \texttt{INITCOND\_LATTICE}, with the cell's bottom left point
-$(x_i,y_j)$ add an additional $\Delta t$ to \texttt{c\_kinetic} at $(i,j,q)$ if
-$\|(x_i,y_j)\|_\infty < 0.5$. Finally, subtract $\Delta t (\mathtt{c\_flux})_{i,j,q}$
-from \texttt{c\_kinetic} at $(i,j,q)$.
-
-Communicating boundaries, solving flux, and evaluating an Euler step are carried out
-again as above. Now for each $(i,j)$ in the main grid, $0 \leq q < n$, average
-\texttt{c\_kinetic} at $(i,j,q)$ with the corresponding cell from the copy made at
-the beginning of the procedure.
-
-Solving for flux involves approximating the flux in each of four directions
-(north, south, east, west) using
-\texttt{slopefit} applied to the current cell and its neighbors. The overall flux for
-each cell is then calculated as
-\begin{equation}
-    \frac{\xi_q}{\Delta x} (\mathtt{eastFlux} - \mathtt{westFlux}) +
-    \frac{\eta_q}{\Delta y} (\mathtt{northFlux} - \mathtt{southFlux}).
-\end{equation}
-
-\subsubsection{\texttt{kinetic\_boundaries.cpp}}
-\label{src:kinetic_boundaries.cpp}
-The \kinetic solver uses the code in \texttt{kinetic\_boundaries.cpp} in
-conjunction with \texttt{Solver::communicateBoundaries()}
-(see Section~\ref{src:comm.cpp}) to coordinate the boundaries of different nodes
-when using MPI.
-The methods defined here take pointers to buffers from which and into which to copy
-grid data. These methods copy the north, south, east, and west parts of the gray
-area as shown in Figure~\ref{fig:grid}.
-
-\subsubsection{\texttt{kinetic\_output.cpp}}
-\label{src:kinetic_output.cpp}
-The \kinetic solver exports data to files named \texttt{out\_\%.3f\_\%d.sn}
-formatted with the time under simulation and the node index. This file
-consists of a short header recording the dimensions of the grid, the domain bounds,
-and the number of quadrature points and weights. The rest of the file contains the
-floating point values of \texttt{c\_kinetic} over the main grid (\emph{not}
-including the ghost cells).
-
-\section{Special Files \comment{UPDATE ME}}
-\label{file}
-\subsection{\inputdeck}
-\label{file:input.deck}
-\inputdeck is the primary input file which controls the basic operation of the program.
-\inputdeck is a line-based text file storing a set of runtime configuration options
-as an ordered listing of key-value pairs. An example file is included with the source
-code. The required options are discussed in Table~\ref{table:input.deck}.
-\begin{table}
-    \centering
-    \caption{Parameters for \inputdeck}
-    \label{table:input.deck}
-
-    \vspace{0.5cm}
-
-    \begin{tabu}{c c X[l]}
-        Option & Type & Description \\ \hline
-        \texttt{SOLVER} & \chars &
-            Solver to be used. Allowed values are \kinetic,
-            \moment, \momopt, and \dn. The operation
-            of each solver is discussed in Section~\ref{solver}. \\
-        \texttt{NUM\_CELLS\_X} & \integer &
-            Number of grid cells in the $x$ direction \\
-        \texttt{NUM\_CELLS\_Y} & \integer &
-            Number of grid cells in the $y$ direction \\
-        \texttt{NUM\_MPI\_PARTITIONS\_X} & \integer &
-            Number of MPI partitions in the $x$ direction \\
-        \texttt{NUM\_MPI\_PARTITIONS\_Y} & \integer &
-            Number of MPI partitions in the $y$ direction \\
-        \texttt{A\_X} & \double &
-            $x$ coordinate of the bottom left corner of the grid \\
-        \texttt{B\_X} & \double &
-            $x$ coordinate of the top right corner of the grid \\
-        \texttt{A\_Y} & \double &
-            $y$ coordinate of the bottom left corner of the grid \\
-        \texttt{B\_Y} & \double &
-            $y$ coordinate of the top right corner of the grid \\
-        \texttt{T\_FINAL} & \double &
-            Duration of the simulation \\
-        \texttt{OUT\_DELTA\_T} & \double &
-            Temporal resolution of the output files \\
-        \texttt{GAUSSIAN\_SIGMA} & \double &
-            $\sigma$ used in the initial grid configurations \\
-        \texttt{FLOOR} & \double &
-            Minimum value that occurs in the grid \\
-        \texttt{INIT\_COND} & \integer &
-            How the initial grid values are calculated. Allowed values are
-            0, 1, and 2, corresponding to \texttt{INITCOND\_LINESOURCE},
-            \texttt{INITCOND\_LATTICE}, and \texttt{INITCOND\_PERIODIC},
-            respectively. Grid initialization is described in
-            Section~\ref{src:main.cpp}. \\
-        \texttt{SIGMA} & \double &
-            Default scattering used in the $\sigma_S$ and $\sigma_T$
-            grids. The scattering values for each grid position are determined
-            based on the particular initial condition selected.
-    \end{tabu}
-\end{table}
-
-\subsection{\kineticdeck}
-\label{file:kinetic.deck}
-\kineticdeck is a brief runtime configuration file controlling the behavior of the
-\kinetic solver. This file uses the same format as
-\inputdeck (Section~\ref{file:input.deck}). The required options are given in
-Table~\ref{table:kinetic.deck}.
-\begin{table}
-    \centering
-    \caption{Parameters for \kineticdeck}
-    \label{table:kinetic.deck}
-
-    \vspace{0.5cm}
-
-    \begin{tabu}{c c X[l]}
-        Option & Type & Description \\ \hline
-        \texttt{QUAD\_ORDER} & \integer &
-            Order of the Gaussian quadrature used for integration \\
-        \texttt{CFL\_FACTOR} & \double &
-            Parameter used to choose the maximum $\Delta t$ without violating the
-            CFL~Condition.
-    \end{tabu}
-\end{table}
-
-
+\section{Results}
+\dots
 
 
 \bibliographystyle{plain}
