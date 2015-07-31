@@ -5,26 +5,12 @@
 #include <papi.h>
 
 const int default_events[] = {
-    PAPI_L1_DCH,
-    PAPI_L1_DCM,
-    PAPI_L1_ICH,
-    PAPI_L1_ICM,
-    PAPI_L2_DCH,
-    PAPI_L2_DCM,
-    PAPI_L2_ICH,
-    PAPI_L2_ICM,
-    PAPI_L3_DCH,
-    PAPI_L3_DCM,
-    PAPI_L3_ICH,
-    PAPI_L3_ICM,
-    PAPI_INT_INS,
-    PAPI_FP_INS,
-    PAPI_FP_OPS,
-    PAPI_SP_OPS,
-    PAPI_DP_OPS,
-    PAPI_VEC_INS,
-    PAPI_VEC_SP,
-    PAPI_VEC_DP
+    PAPI_L1_TCH,
+    PAPI_L1_TCM,
+    PAPI_L2_TCH,
+    PAPI_L2_TCM,
+    PAPI_L3_TCH,
+    PAPI_L3_TCM,
 };
 
 typedef struct _PAPI_info {
