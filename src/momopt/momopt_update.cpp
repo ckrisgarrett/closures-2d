@@ -220,7 +220,7 @@ void MomOptSolver::solveOptimization()
         options.maxBfgsIter = c_maxIterBfgs;
         options.tolAbs = c_tolerance * c_tolerance;
         options.tolRel = c_tolerance;
-        options.tolGamma = 1.1;
+        //options.tolGamma = 1.1;
         options.condHMax = c_condHMax;
         options.condHMaxBfgs = c_condHMaxBfgs;
         options.deltaPPn = c_deltaPPn;
@@ -254,8 +254,8 @@ void MomOptSolver::solveOptimization()
         {
             if(outs.iter > c_optStats.maxIter)
                 c_optStats.maxIter = outs.iter;
-            if(outs.iterGamma > c_optStats.maxGammaIter)
-                c_optStats.maxGammaIter = outs.iterGamma;
+            //if(outs.iterGamma > c_optStats.maxGammaIter)
+            //    c_optStats.maxGammaIter = outs.iterGamma;
             for(int r = 0; r < NUM_REGULARIZATIONS; r++)
             {
                 if(fabs(outs.r - REGULARIZATIONS[r]) < 1e-10)
@@ -265,9 +265,9 @@ void MomOptSolver::solveOptimization()
             c_optStats.iterMean = 
                 (c_optStats.numDualSolves * c_optStats.iterMean + outs.iter) / 
                 (c_optStats.numDualSolves + 1.0);
-            c_optStats.iterGammaMean = 
-                (c_optStats.numDualSolves * c_optStats.iterGammaMean + outs.iterGamma) / 
-                (c_optStats.numDualSolves + 1.0);
+            //c_optStats.iterGammaMean = 
+            //    (c_optStats.numDualSolves * c_optStats.iterGammaMean + outs.iterGamma) / 
+            //    (c_optStats.numDualSolves + 1.0);
             c_optStats.numDualSolves++;
         }
     }

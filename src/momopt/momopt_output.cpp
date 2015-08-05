@@ -65,8 +65,8 @@ void MomOptSolver::outputData(double time)
     file = fopen(filename, "w");
     fprintf(file, "Max number of iterations: %d\n", c_optStats.maxIter);
     fprintf(file, "Mean number of iterations: %f\n", c_optStats.iterMean);
-    fprintf(file, "Max number of iterations for gamma: %d\n", c_optStats.maxGammaIter);
-    fprintf(file, "Mean number of iterations for gamma: %f\n", c_optStats.iterGammaMean);
+    //fprintf(file, "Max number of iterations for gamma: %d\n", c_optStats.maxGammaIter);
+    //fprintf(file, "Mean number of iterations for gamma: %f\n", c_optStats.iterGammaMean);
     fprintf(file, "Number of optimizations: %d\n", c_optStats.numDualSolves);
     fprintf(file, "Regularizations Histogram\n");
     for(int i = 0; i < NUM_REGULARIZATIONS; i++)

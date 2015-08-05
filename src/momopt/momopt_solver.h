@@ -33,10 +33,10 @@ private:
     struct OPTIMIZATION_STATS
     {
         int maxIter;
-        int maxGammaIter;
+        //int maxGammaIter;
         int histReg[NUM_REGULARIZATIONS];
         double iterMean;
-        double iterGammaMean;
+        //double iterGammaMean;
         int numDualSolves;
     };
 
