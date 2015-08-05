@@ -74,9 +74,9 @@ double MomOptSolver::init(double dx, double dy)
 
     // Optimization Statistics
     c_optStats.maxIter = 0;
-    c_optStats.maxGammaIter = 0;
+    //c_optStats.maxGammaIter = 0;
     c_optStats.iterMean = 0.0;
-    c_optStats.iterGammaMean = 0.0;
+    //c_optStats.iterGammaMean = 0.0;
     c_optStats.numDualSolves = 0;
     for(int i = 0; i < NUM_REGULARIZATIONS; i++)
     {

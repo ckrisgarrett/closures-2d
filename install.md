@@ -3,11 +3,12 @@ Dependencies
 
 This software depends on
 
-* GSL
+* GSL - GNU Scientific Library
 * BLAS
 * LAPACK
 * OpenMP (optional, provided by many compilers)
 * Open MPI (optional)
+* PAPI (optional)
 
 If the required libraries are installed at nonstandard locations, or
 additional compiler customization is necessary, users should edit `config.py`.
@@ -58,4 +59,15 @@ To build only the MPI and OMP accelerated version, run
 
 Non-default variants (`solver_profile` and `solver_debug`) can also be built in
 this way.
+
+
+Issues
+======
+
+* Where is input.deck?
+* Does this work on mac?
+* Name papi build something different.
+* How to build debug?
+* Need to give every parameter available.
+* Where are plot.py and other python tools?
 

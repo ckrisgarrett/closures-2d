@@ -57,31 +57,31 @@ static void isotropicAlpha(int n, double *alpha, int momentType, double delta)
 /*
     Estimate an upper bound for the error.
 */
-static double modcfl(int n, double *da, int momentType)
-{
-    double da_1 = 0;
-    for(int i = 0; i < n; i++)
-    {
-        da_1 = da_1 + fabs(da[i]);
-    }
-    
-    int pnOrder = floor(sqrt(n)) + 1;
-    double m_inf = sqrt((2 * pnOrder + 1) / (2 * M_PI));
-    
-    switch(momentType)
-    {
-        case MOMENT_TYPE_MN:
-            return exp(2.0 * da_1 * m_inf);
-        case MOMENT_TYPE_PPN:
-            return 1.0 + 2.0 * da_1 * m_inf;
-        default:
-            printf("modcfl: moment type out of range.\n");
-            utils_abort();
-    }
-    
-    // Should never reach this point.
-    return 0.0;
-}
+//static double modcfl(int n, double *da, int momentType)
+//{
+//    double da_1 = 0;
+//    for(int i = 0; i < n; i++)
+//    {
+//        da_1 = da_1 + fabs(da[i]);
+//    }
+//    
+//    int pnOrder = floor(sqrt(n)) + 1;
+//    double m_inf = sqrt((2 * pnOrder + 1) / (2 * M_PI));
+//    
+//    switch(momentType)
+//    {
+//        case MOMENT_TYPE_MN:
+//            return exp(2.0 * da_1 * m_inf);
+//        case MOMENT_TYPE_PPN:
+//            return 1.0 + 2.0 * da_1 * m_inf;
+//        default:
+//            printf("modcfl: moment type out of range.\n");
+//            utils_abort();
+//    }
+//    
+//    // Should never reach this point.
+//    return 0.0;
+//}
 
 
 /*
@@ -190,7 +190,7 @@ void optScaled(int nm, int nq, double *u, double *P2M, double *alphaP, double *a
     
     int maxIter = options->maxIter;
     double tolRel = options->tolRel;
-    double tolGamma = options->tolGamma;
+    //double tolGamma = options->tolGamma;
     double r = 0.0;
     double condHMax = options->condHMax;
     int regIndex = 0;
@@ -212,12 +212,13 @@ void optScaled(int nm, int nq, double *u, double *P2M, double *alphaP, double *a
     // below its tolerance after the norm of the gradient satisfies its
     // tolerance.  (typically, the norm of the gradient will fall below its
     // tolerance much more quickly than gamma will.)
-    int iterGamma = 0;
+    //int iterGamma = 0;
 
     // initialize the backtracking factor
     double t = 1;
-    double gamma, err;
-    gamma = err = 0;      // To stop compiler warnings.
+    //double gamma, err;
+    double err = 0.0;
+    //gamma = err = 0;      // To stop compiler warnings.
     
     
     // To see if we hit max regularization once already.
@@ -273,7 +274,7 @@ void optScaled(int nm, int nq, double *u, double *P2M, double *alphaP, double *a
             
             rtol = dnrm2_(&nm, u, &inc1) * tolRel;
             iter = 0;
-            iterGamma = 0;
+            //iterGamma = 0;
             t = 1;
             
             continue;
@@ -319,7 +320,7 @@ void optScaled(int nm, int nq, double *u, double *P2M, double *alphaP, double *a
             dtrsm_(&lChar, &lChar, &nChar, &nChar, &nm, &nq, &one, P2Min, &nm, pP, &nm);
             
             iter = 0;
-            iterGamma = 0;
+            //iterGamma = 0;
             t = 1;
             if(regIndex == NUM_REGULARIZATIONS - 1)
                 maxIter = 10 * maxIter;
@@ -357,8 +358,8 @@ void optScaled(int nm, int nq, double *u, double *P2M, double *alphaP, double *a
             // gamma, the supplementary stopping criterion
             memcpy(dM, dP, nm * sizeof(double));
             dtrsv_(&lChar, &tChar, &nChar, &nm, P2M, &nm, dM, &inc1);
-            gamma = modcfl(nm, dM, options->momentType);
-            if(gamma <= tolGamma)
+            //gamma = modcfl(nm, dM, options->momentType);
+            //if(gamma <= tolGamma)
             {
                 // problem solved!
                 memcpy(alphaM, alphaP, nm * sizeof(double));
@@ -371,11 +372,11 @@ void optScaled(int nm, int nq, double *u, double *P2M, double *alphaP, double *a
                 break;
             }
         }
-        else if(err <= rtol && gamma > tolGamma)
-        {
-            // this is to keep track of how many extra iterations we took just for gamma
-            iterGamma++;
-        }
+//        else if(err <= rtol && gamma > tolGamma)
+//        {
+//            // this is to keep track of how many extra iterations we took just for gamma
+//            iterGamma++;
+//        }
         
         
         // if you get to this point, that means you didn't satisfy the stopping
@@ -389,10 +390,10 @@ void optScaled(int nm, int nq, double *u, double *P2M, double *alphaP, double *a
     if(outs != NULL)
     {
         outs->iter = totalIter;
-        outs->iterGamma = iterGamma;
-        if(outs->iterGamma < 0)
-            outs->iterGamma = 0;
-        outs->gamma = gamma;
+//        outs->iterGamma = iterGamma;
+//        if(outs->iterGamma < 0)
+//            outs->iterGamma = 0;
+//        outs->gamma = gamma;
         outs->normG = err;
         outs->r = r;
     }

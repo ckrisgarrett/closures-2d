@@ -15,7 +15,7 @@ struct OPTIONS
     int maxBfgsIter;        // For BFGS only
     double tolAbs;
     double tolRel;
-    double tolGamma;
+    //double tolGamma;
     double condHMax;
     double condHMaxBfgs;    // For BFGS only
     double deltaPPn;        // For PPn only
@@ -26,8 +26,8 @@ struct OUTS
 {
     double r;
     int iter;
-    int iterGamma;
-    double gamma;
+    //int iterGamma;
+    //double gamma;
     double normG;
 };
 
