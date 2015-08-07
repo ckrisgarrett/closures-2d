@@ -5,11 +5,14 @@
 */
 
 #include "moment_solver.h"
-#include <omp.h>
 #include <strings.h>
 #include <math.h>
 #include <stdlib.h>
 #include "../utils.h"
+
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
 
 #ifdef USE_PAPI
 #include "../profiling.h"

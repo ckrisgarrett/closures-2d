@@ -7,10 +7,13 @@
 #include "momopt_solver.h"
 #include "../utils.h"
 #include <gsl/gsl_blas.h>
-#include <omp.h>
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
 
 #ifdef USE_PAPI
 #include "../profiling.h"
