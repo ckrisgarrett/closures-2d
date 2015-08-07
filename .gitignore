@@ -2,7 +2,9 @@
 *.pn
 *.opt
 *.deck
+*.pyc
 solver_*
+
 
 regression.txt
 convergence.txt

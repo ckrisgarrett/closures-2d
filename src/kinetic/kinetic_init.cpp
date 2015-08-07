@@ -41,8 +41,8 @@ double KineticSolver::init(double dx, double dy)
     int quadOrder;
     double cflFactor;
 
-    checkInput(c_inputDeckReader.getValue("QUAD_ORDER", &quadOrder), __LINE__);
-    checkInput(c_inputDeckReader.getValue("CFL_FACTOR", &cflFactor), __LINE__);
+    checkInput(c_inputDeckReader.getValue("KINETIC_QUAD_ORDER", &quadOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("KINETIC_CFL_FACTOR", &cflFactor), __LINE__);
     
     
     // Maximum value for delta t.

@@ -42,9 +42,9 @@ double DnSolver::init(double dx, double dy)
     int momentOrder, quadOrder;
     double cflFactor;
 
-    checkInput(c_inputDeckReader.getValue("MOMENT_ORDER", &momentOrder), __LINE__);
-    checkInput(c_inputDeckReader.getValue("QUAD_ORDER", &quadOrder), __LINE__);
-    checkInput(c_inputDeckReader.getValue("CFL_FACTOR", &cflFactor), __LINE__);
+    checkInput(c_inputDeckReader.getValue("DN_MOMENT_ORDER", &momentOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("DN_QUAD_ORDER", &quadOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("DN_CFL_FACTOR", &cflFactor), __LINE__);
     
     
     // Maximum value for delta t.

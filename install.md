@@ -39,9 +39,11 @@ same build.
     scons --omp --mpi
 
 In this case, SCons will build `solver_serial`, `solver_omp`, `solver_mpi`, and
-`solver_mpiomp` by default. To build only a particular target, specify it on
-the command line. Note that build targets are only available with the
-corresponding flag. For example, running
+`solver_mpiomp` by default. Running `scons` builds only the default targets.
+Specifying build options (e.g. `--omp`) only makes
+the build targets available, it does *not* build them.
+To build a particular target, specify it on
+the command line. For example, running
 
     scons solver_mpi
 
@@ -60,14 +62,20 @@ To build only the MPI and OMP accelerated version, run
 Non-default variants (`solver_profile` and `solver_debug`) can also be built in
 this way.
 
+To add PAPI profiling, add `--papi` to the command line,
+e.g. `scons --omp --papi` builds `solver_serial` and `solver_omp`, both
+with PAPI compiled in.
 
-Issues
-======
+Example Build Commands
+======================
 
-* Where is input.deck?
-* Does this work on mac?
-* Name papi build something different.
-* How to build debug?
-* Need to give every parameter available.
-* Where are plot.py and other python tools?
+* `scons` builds `solver_serial`
+* `scons --omp solver_omp` builds `solver_omp`
+* `scons --mpi solver_mpi` builds `solver_mpi`
+* `scons --omp --mpi solver_mpiomp` builds `solver_mpiomp`
+* `scons solver_debug` builds `solver_debug`
+* `scons solver_profile` builds `solver_profile`
+
+
+
 

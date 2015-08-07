@@ -58,11 +58,11 @@ double MomentSolver::init(double dx, double dy)
     int momentOrder, quadOrder;
     double cflFactor;
 
-    checkInput(c_inputDeckReader.getValue("MOMENT_ORDER", &momentOrder), __LINE__);
-    checkInput(c_inputDeckReader.getValue("QUAD_ORDER", &quadOrder), __LINE__);
-    checkInput(c_inputDeckReader.getValue("FILTER_TYPE", &c_filterType), __LINE__);
-    checkInput(c_inputDeckReader.getValue("FILTER_TUNE", &c_filterTune), __LINE__);
-    checkInput(c_inputDeckReader.getValue("CFL_FACTOR", &cflFactor), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMENT_MOMENT_ORDER", &momentOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMENT_QUAD_ORDER", &quadOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMENT_FILTER_TYPE", &c_filterType), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMENT_FILTER_TUNE", &c_filterTune), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMENT_CFL_FACTOR", &cflFactor), __LINE__);
     
     
     // Maximum value for delta t.

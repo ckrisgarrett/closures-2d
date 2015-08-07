@@ -53,19 +53,19 @@ double MomOptSolver::init(double dx, double dy)
     int momentOrder, quadOrder;
     double cflFactor;
 
-    checkInput(c_inputDeckReader.getValue("MOMENT_ORDER", &momentOrder), __LINE__);
-    checkInput(c_inputDeckReader.getValue("QUAD_ORDER", &quadOrder), __LINE__);
-    checkInput(c_inputDeckReader.getValue("CFL_FACTOR", &cflFactor), __LINE__);
-    checkInput(c_inputDeckReader.getValue("TOL", &c_tolerance), __LINE__);
-    checkInput(c_inputDeckReader.getValue("COND_H_MAX", &c_condHMax), __LINE__);
-    checkInput(c_inputDeckReader.getValue("COND_H_MAX_BFGS", &c_condHMaxBfgs), __LINE__);
-    checkInput(c_inputDeckReader.getValue("MAX_ITER", &c_maxIter), __LINE__);
-    checkInput(c_inputDeckReader.getValue("MAX_BFGS_ITER", &c_maxIterBfgs), __LINE__);
-    checkInput(c_inputDeckReader.getValue("USE_GAUNT", &c_useGaunt), __LINE__);
-    checkInput(c_inputDeckReader.getValue("THETA", &c_theta), __LINE__);
-    checkInput(c_inputDeckReader.getValue("DELTA_PPN", &c_deltaPPn), __LINE__);
-    checkInput(c_inputDeckReader.getValue("MOMENT_TYPE", &c_momentType), __LINE__);
-    checkInput(c_inputDeckReader.getValue("OPTIMIZATION_TYPE", &c_optType), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_MOMENT_ORDER", &momentOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_QUAD_ORDER", &quadOrder), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_CFL_FACTOR", &cflFactor), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_TOL", &c_tolerance), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_COND_H_MAX", &c_condHMax), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_COND_H_MAX_BFGS", &c_condHMaxBfgs), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_MAX_ITER", &c_maxIter), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_MAX_BFGS_ITER", &c_maxIterBfgs), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_USE_GAUNT", &c_useGaunt), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_THETA", &c_theta), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_DELTA_PPN", &c_deltaPPn), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_MOMENT_TYPE", &c_momentType), __LINE__);
+    checkInput(c_inputDeckReader.getValue("MOMOPT_OPTIMIZATION_TYPE", &c_optType), __LINE__);
     
     
     // Maximum value for delta t.
