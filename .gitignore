@@ -5,7 +5,7 @@
 *.pyc
 solver_*
 
-
+config.py
 regression.txt
 convergence.txt
 tests.txt
