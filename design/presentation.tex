@@ -13,59 +13,20 @@
 \newcommand{\SN}{\ensuremath{\textnormal{S}_\textnormal{N}}\xspace}
 \newcommand{\PN}{\ensuremath{\textnormal{P}_\textnormal{N}}\xspace}
 \newcommand{\MN}{\ensuremath{\textnormal{M}_\textnormal{N}}\xspace}
-\newcommand{\PPN}{\ensuremath{\textnormal{PP}_\textnormal{N}}\xspace}
-\newcommand{\DN}{\ensuremath{\textnormal{D}_\textnormal{N}}\xspace}
-\newcommand{\kinetic}{\texttt{kinetic}\xspace}
-\newcommand{\moment}{\texttt{moment}\xspace}
-\newcommand{\momopt}{\texttt{momopt}\xspace}
 
-\usetheme{Madrid}
-\beamertemplatenavigationsymbolsempty
 \frenchspacing
 
 \title{\texttt{closures-2d}}
-\author{Tim Shaffer\thanks{Mentor: C. Kristopher Garrett}}
+\author{C. Kristopher Garrett, Tim Shaffer}
 
 \begin{document}
     \frame{\titlepage}
-
-    \begin{frame}{Goals}
-        We are releasing software that tests angular approximations in kinetic transport simulations
-        \begin{itemize}
-            \item Based on code used for a previous publication
-            \item Open source so that others can use/collaborate
-            \item Makes it easy to implement new features
-            \item Implements \SN, \PN, \MN, \PPN, \DN~(experimental)
-        \end{itemize}
-    \end{frame}
-
-    \begin{frame}{Improvements}
-        Algorithmic changes:
-        \begin{itemize}
-            \item Added experimental Lebedev quadrature
-            \item Removed $\gamma$ factor for ansatz correction in \texttt{momopt}
-            \item Changed \texttt{momopt}'s regularization in case of bad condition number
-        \end{itemize}
-
-        \vfill
-
-        Software-related improvements:
-        \begin{itemize}
-            \item Cross-platform build system
-            \item Automated testing
-            \item Better MPI communication
-            \item Improved documentation
-            \item Improved interface
-            \item Bugfixes
-            \item Profiling and optimization
-        \end{itemize}
-    \end{frame}
 
 \section{Background}
 
     \begin{frame}{What Are Kinetic Equations?}
         \begin{columns}[t]
-            \column{0.45 \textwidth}
+            \column{0.5 \textwidth}
             \begin{block}{Macroscopic}
                 \begin{itemize}
                     \item $\rho(\vec{x},t)$ -- Density
@@ -74,7 +35,7 @@
                 \end{itemize}
                 Discretize \vec{x}, $t$ into 100 values: 4GB memory requirement
             \end{block}
-            \column{0.45 \textwidth}
+            \column{0.5 \textwidth}
             \begin{block}{Mesoscopic}
                 \begin{itemize}
                     \item $f(\vec{x},\vec{v},t)$ -- Density with respect to space \emph{and velocity}
@@ -233,46 +194,6 @@
 
 \section{Implementation}
 
-    \begin{frame}{Solvers}
-        \begin{columns}
-            \column{0.45 \textwidth}
-            \begin{block}{\kinetic}
-                \begin{itemize}
-                    \item Implements \SN
-                    \item Easy to compute
-                    \item Permits negative densities
-                    \item Suffers from ray effects at low order
-                \end{itemize}
-                [picture]
-            \end{block}
-            \column{0.45 \textwidth}
-            \begin{block}{\moment}
-                \begin{itemize}
-                    \item Implements \PN
-                    \item Somewhat easy to compute
-                    \item Permits negative densities
-                    \item Suffers from oscillatory artifacts
-                    \item Filters can improve performance
-                \end{itemize}
-                [picture]
-            \end{block}
-        \end{columns}
-    \end{frame}
-
-    \begin{frame}{Solvers}
-        \begin{block}{\momopt}
-            \begin{itemize}
-                \item Implements \MN and \PPN
-                \item Difficult to compute
-                \item Ensures positivity
-                \item Requires additional optimization procedure
-            \end{itemize}
-            [picture]
-
-            [picture]
-        \end{block}
-    \end{frame}
-
     \begin{frame}{Initial Conditions}
         \begin{block}{Gaussian Initial Condition}
             Two dimensional Gaussian function centered at the origin
@@ -403,36 +324,32 @@
         \end{block}
     \end{frame}
 
+    \begin{frame}{Results}
+        Tabulate some runtimes, convergence rates, etc.
+    \end{frame}
+
+    \begin{frame}
+        Show some plots
+    \end{frame}
+
 \section{Software}
     \begin{frame}{Release}
         We are releasing this code as open source software.
 
         \vfill
 
-        Now uses SCons, a Python-based build system, rather than Makefiles
-        \begin{itemize}
-            \item Cross platform
-            \item Sets up library search paths
-            \item Intelligent compilation
-        \end{itemize}
+        Built using SCons
 
         \vfill
 
-        Depends on:
-        \begin{columns}
-            \column{0.25 \textwidth}
-            \begin{itemize}
-                \item GSL
-                \item BLAS
-                \item LAPACK
-            \end{itemize}
-            \column{0.4 \textwidth}
-            \begin{itemize}
-                \item OpenMP (optional)
-                \item Open MPI (optional)
-                \item PAPI (optional)
-            \end{itemize}
-        \end{columns}
+        Depends on
+        \begin{itemize}
+            \item GSL
+            \item BLAS
+            \item LAPACK
+            \item OpenMP (optional, provided by many compilers)
+            \item Open MPI (optional)
+        \end{itemize}
     \end{frame}
 
     \begin{frame}{Tests}
@@ -448,60 +365,26 @@
         The testing code is written in Python and integrated with the build system
     \end{frame}
 
-    \begin{frame}{Quadratures}
-        Currently uses Chebyshev-Legendre quadrature.
+    \begin{frame}{Improvements}
+        Algorithmic changes:
         \begin{itemize}
-            \item Constructed from $n$ Gauss-Legendre rule
-            \item Optimized for symmetry
-            \item Exactly integrates $2n - 1$ moments
+            \item Added experimental Lebedev quadrature
+            \item Removed $\delta$ factor for ansatz correction in \texttt{momopt}
+            \item Changed \texttt{momopt}'s regularization in case of bad condition number
         \end{itemize}
 
         \vfill
 
-        Added (experimental) Lebedev quadrature
+        Software-related improvements:
         \begin{itemize}
-            \item Constructed based on octahedral symmetry group
-            \item Optimal with respect to number of points
-            \item Structure does not lend itself to symmetry optimizations
-            \item Negative weights
+            \item Cross-platform build system
+            \item Automated testing
+            \item Better MPI communication
+            \item Improved documentation
+            \item Improved interface
+            \item Bugfixes
+            \item Profiling and optimization
         \end{itemize}
-    \end{frame}
-
-    \begin{frame}{\momopt Changes}
-        \begin{block}{$\gamma$ factor}
-            \momopt computes ansatz for the optimization, yielding an \emph{approximate} solution $\vec{u} \approx \integral{\exp (\T{\vec{\alpha}})}$.
-
-            Needed to estimate error and try to correct via $\gamma$ ratio.
-
-            Required fine mesh and low tolerance on optimization to prevent non-realizability.
-
-            Instead, compute $\hat{\vec{u}}$ such that $\hat{\vec{u}} = \integral{\exp \left(\T{\vec{\alpha}}\right)}$.
-        \end{block}
-
-        \vfill
-
-        \begin{block}{Fixed regularization}
-            In case of bad condition number (i.e. the system is too sensitive to errors) fall back to isotropic \vec{\alpha} to allow the algorithm to complete successfully
-        \end{block}
-    \end{frame}
-
-    \begin{frame}{Performance}
-        Added timing and profiling-related measurement capabilities
-
-        \vfill
-
-        Tested additional optimizations
-        \begin{itemize}
-            \item Spatial blocking (reduce scheduling overhead, cache misses)
-            \item CPU pinning (ccNUMA)
-            \item Memory alignment
-        \end{itemize}
-    \end{frame}
-
-    \begin{frame}{Source Code}
-        The source code is available on Github
-
-        \url{https://github.com/ckrisgarrett/closures-2d}
     \end{frame}
 
     \begin{frame}{Bibliography}
