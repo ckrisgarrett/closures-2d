@@ -1,8 +1,8 @@
 def kinetic_deck(quad_order=12,
                  cfl_factor=0.9):
     return (
-"""QUAD_ORDER %d
-CFL_FACTOR %.17f""" % (quad_order,
+"""KINETIC_QUAD_ORDER %d
+KINETIC_CFL_FACTOR %.17f""" % (quad_order,
                     cfl_factor))
 
 def moment_deck(moment_order=3,
@@ -12,11 +12,11 @@ def moment_deck(moment_order=3,
                 cfl_factor=0.9):
     filterno = {"none": 0, "hauck": 1, "sspline": 2, "lanczos": 3}
     return ("""
-MOMENT_ORDER %d
-QUAD_ORDER %d
-FILTER_TYPE %d
-FILTER_TUNE %d
-CFL_FACTOR %.17f
+MOMENT_MOMENT_ORDER %d
+MOMENT_QUAD_ORDER %d
+MOMENT_FILTER_TYPE %d
+MOMENT_FILTER_TUNE %d
+MOMENT_CFL_FACTOR %.17f
 """ % (moment_order,
        quad_order,
        filterno[filter_type],
@@ -28,19 +28,19 @@ def momopt_deck(moment_order=3, quad_order=30, cfl_factor=0.9, tol=1e-4,
         use_cg=1, theta=2.0, delta_ppn=1e-10, moment_type="mn", opt_type=0):
     momtypenum = {"mn": 0, "ppn": 1}
     return ("""
-MOMENT_ORDER %d
-QUAD_ORDER %d
-CFL_FACTOR %.17f
-TOL %.17f
-COND_H_MAX %.17f
-COND_H_MAX_BFGS %d
-MAX_ITER %d
-MAX_BFGS_ITER %d
-USE_CLEBSCH_GORDAN %d
-THETA %.17f
-DELTA_PPN %.17f
-MOMENT_TYPE %d
-OPTIMIZATION_TYPE %d
+MOMOPT_MOMENT_ORDER %d
+MOMOPT_QUAD_ORDER %d
+MOMOPT_CFL_FACTOR %.17f
+MOMOPT_TOL %.17f
+MOMOPT_COND_H_MAX %.17f
+MOMOPT_COND_H_MAX_BFGS %d
+MOMOPT_MAX_ITER %d
+MOMOPT_MAX_BFGS_ITER %d
+MOMOPT_USE_CLEBSCH_GORDAN %d
+MOMOPT_THETA %.17f
+MOMOPT_DELTA_PPN %.17f
+MOMOPT_MOMENT_TYPE %d
+MOMOPT_OPTIMIZATION_TYPE %d
 """ % (moment_order,
        quad_order,
        cfl_factor,
