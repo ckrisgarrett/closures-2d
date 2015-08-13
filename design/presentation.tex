@@ -8,7 +8,7 @@
 \DeclareMathOperator{\cond}{cond}
 \let\arrowvec\vec
 \renewcommand{\vec}[1]{\ensuremath{#1}}
-\newcommand{\integral}[1]{\ensuremath{\int_{\mathbb{S}^2} #1 \dif \Omega}}
+\newcommand{\integral}[1]{\ensuremath{\int_{S^2} #1 \dif \Omega}}
 \newcommand{\closure}[1]{\ensuremath{\mathcal{E}(#1)}}
 \newcommand{\T}[1]{\ensuremath{#1^\textnormal{T}}}
 \newcommand{\R}{\ensuremath{\mathbb{R}}\xspace}
@@ -26,7 +26,7 @@
 \beamertemplatenavigationsymbolsempty
 \frenchspacing
 
-\title{\texttt{closures-2d}:\\Open Source Software Release}
+\title{\texttt{closures-2d}}
 \author{Tim Shaffer\thanks{Mentor: C. Kristopher Garrett}}
 
 \begin{document}
@@ -127,7 +127,7 @@
                 \begin{itemize}
                     \item $f(\vec{x},\vec{v},t)$ -- Density with respect to space \emph{and velocity}
                 \end{itemize}
-                Discretize \vec{x}, \vec{v}, $t$ into 100 values: 800TB memory requirement
+                Discretize \vec{x}, \vec{v}, $t$ into 100 pieces: 800TB memory requirement
             \end{block}
         \end{columns}
 
@@ -137,19 +137,19 @@
         \begin{itemize}
             \item $\rho(\vec{x},t) = \int_{\R^3} f \dif \vec{v}$
             \item $\vec{u}(\vec{x},t) = \frac{1}{\rho} \int_{\R^3} \vec{v}f \dif \vec{v}$
-            \item $E(\vec{x},t) = \frac{1}{2} \int_{\R^3} \| \vec{v} - \vec{u} \|^2 f \dif \vec{v}$
+            \item $E(\vec{x},t) = \frac{1}{2} \int_{\R^3} \| \vec{v} - \vec{u} \|^2 \dif \vec{v}$
         \end{itemize}
     \end{frame}
 
     \begin{frame}{What Are Kinetic Equations?}
         First used for rarefied gas dynamics (e.g. high altitude gases where collisions do not dominate the physics)
 
-        \[\partial_t f + \vec{v} \cdot \nabla_\vec{x} f = C(f)\]
+        \[\partial_t f + \vec{v} \cdot \nabla_\vec{x} = C(f)\]
         where $\int C(f) \dif \vec{v} = 0$.
 
         \vfill
 
-        Integrate against \vec{v} to get first Euler/Navier-Stokes equation
+        Integrate against \vec{v} to get First Euler/Navier-Stokes equation
         \[\partial_t \rho + \nabla_{\vec{x}} \cdot (\rho \vec{u}) = 0\]
 
         \vfill
@@ -164,9 +164,9 @@
     \begin{frame}{Kinetic Problem}
         \begin{block}{Unit Speed, Isotropic Scattering}
             \begin{equation*}
-                \partial_t f + \Omega \cdot \nabla_\vec{x} f = \frac{\sigma_s}{4\pi} \integral{f} - \sigma_t f
+                \partial_t f + \Omega \cdot \nabla_\vec{x} = \frac{\sigma_s}{4\pi} \integral{f} - \sigma_t f
             \end{equation*}
-            where $x \in \R^2$, $\Omega \in \mathbb{S}^2$, and $\sigma_s$,$\sigma_t$ are the scattering and total cross sections.
+            where $x \in \R^3$, $\Omega \in S^2$, and $\sigma_s$,$\sigma_t$ are the scattering and transmission cross sections.
         \end{block}
 
         \vfill
@@ -205,6 +205,7 @@
             \begin{itemize}
                 \item Implements \SN
                 \item Easy to compute
+                \item Permits negative densities
                 \item Suffers from ray effects at low order
             \end{itemize}
 
@@ -308,12 +309,12 @@
             \centering
             \begin{tabular}{ccc}
                 \toprule
-                Cell size & Relative Error & Order \\
+                Cell size       & Error     & Order \\
                 \midrule
-                $\Delta x / 1$ & 0.015718 & --- \\
-                $\Delta x / 2$ & 0.004056 & 1.954163 \\
-                $\Delta x / 4$ & 0.000958 & 2.082828 \\
-                $\Delta x / 8$ & 0.000189 & 2.340759 \\
+                $\Delta x / 1$ & 8.075049 & 1.954163 \\
+                $\Delta x / 2$ & 2.083932 & 2.082828 \\
+                $\Delta x / 4$ & 0.491915 & 2.340759 \\
+                $\Delta x / 8$ & 0.097107 & ---      \\
                 \bottomrule
             \end{tabular}
         \end{block}
@@ -341,10 +342,16 @@ for(int k = 0; k < N; k++) {
     result[i][j] += left[i][k] * right[k][j]
 }}}
         \end{lstlisting}
+    \end{frame}
 
-        \vfill
-
-        The order of the loops does not matter algebraically.
+    \begin{frame}[fragile=singleslide]{Caching Example: Matrix Multiplication}
+        \begin{lstlisting}[language=C]
+for(int i = 0; i < N; i++) {
+for(int k = 0; k < N; k++) {
+for(int j = 0; j < N; j++) {
+    result[i][j] += left[i][k] * right[k][j]
+}}}
+        \end{lstlisting}
     \end{frame}
 
     \begin{frame}{Caching Example: Matrix Multiplication}
@@ -382,20 +389,12 @@ for(int k = 0; k < N; k++) {
             \item Using a simple loop: dispatch each cell to a (possibly different) core
             \item Using a block-oriented loop: dispatch an entire block to core, improving cache utilization and reducing scheduling overhead
         \end{itemize}
-
-        \vfill
-
-        With adjustments to main loop in flux calculations:
-        \begin{itemize}
-            \item $\sim$10\% speedup
-            \item Eliminate $\sim$30\% L1 cache misses, $\sim$75\% L2, $\sim$50\% L3
-        \end{itemize}
     \end{frame}
 
     \begin{frame}{Quadratures}
         Currently uses Chebyshev-Legendre quadrature.
         \begin{itemize}
-            \item Product quadrature on the sphere \[\int_{\mathbb{S}^2} \cdot \dif \Omega = \int_{\mu=-1}^1 \int_{\phi=0}^{2\pi} \cdot \dif \phi \dif \mu\]
+            \item Product quadrature on the sphere \[\int_{S^2} \cdot \dif \Omega = \int_{\mu=-1}^1 \int_{\phi=0}^{2\pi} \cdot \dif \phi \dif \mu\]
             \item $n$ Gauss-Legendre points on $\mu$
             \item $2n$ equally spaced points on $\phi$
             \item Exactly integrates to degree $2n - 1$ moments
@@ -416,7 +415,7 @@ for(int k = 0; k < N; k++) {
     \end{frame}
 
     \begin{frame}{Optimization Problem}
-        \momopt uses nonlinear spectral methods, so updates entail solving an optimization problem for a given constant vector \vec{u} and moments $\vec{m}(\Omega)$.
+        \momopt uses nonlinear spectral methods, so updates entail solving an optimiztion problem for a given constant vector \vec{u} and moments $\vec{m}(\Omega)$.
         \begin{equation*}
             \min_{\vec{\alpha}} \integral{\exp(\T{\vec{\alpha}} \vec{m})} - \T{\vec{\alpha}} \vec{u}
         \end{equation*}
@@ -425,9 +424,9 @@ for(int k = 0; k < N; k++) {
 
         To use a Newton solver, we need
         \begin{align*}
-            \textnormal{Objective function } F(\vec{\alpha}) &= \integral{\exp(\T{\vec{\alpha}} \vec{m})} - \T{\vec{\alpha}} \vec{u} \\
+            \textnormal{Objective funtion } F(\vec{\alpha}) &= \integral{\exp(\T{\vec{\alpha} \vec{m}})} - \T{\vec{\alpha}} \vec{u} \\
             \textnormal{Gradient } g(\vec{\alpha}) &= \integral{\vec{m} \exp(\vec{\T{\alpha}} \vec{m})} - \vec{u} \\
-            \textnormal{Hessian } H(\vec{\alpha}) &= \integral{\vec{m}\T{\vec{m}} \exp(\T{\vec{\alpha}} \vec{m})}
+            \textnormal{Hessian } H(\vec{\alpha}) &= \integral{\vec{m} \T{\vec{u}} \exp(\T{\vec{\alpha}} \vec{m})}
         \end{align*}
 
         \vfill
@@ -440,7 +439,7 @@ for(int k = 0; k < N; k++) {
         \begin{itemize}
             \item Needed to estimate error and try to correct via $\gamma = \frac{\exp(\T{\bar{\vec{\alpha}}} \vec{m})}{\exp(\T{\hat{\vec{\alpha}}} \vec{m})}$.
 
-                Here, the numerator of $\gamma$ is exact, and the denominator is our approximation.
+                Here, the numerator of $\gamma$ is our approximation, and the denominatior is exact.
             \item Required fine mesh and low tolerance on optimization to prevent non-realizability.
         \end{itemize}
 
@@ -449,14 +448,8 @@ for(int k = 0; k < N; k++) {
         Instead, compute $\hat{\vec{u}}$ such that $\hat{\vec{u}} = \integral{\vec{m} \exp(\T{\hat{\vec{\alpha}}} \vec{m})}$
         \begin{itemize}
             \item Adjust scaling to conserve mass
-            \item \alert{Exact equality ensures realizability}
+            \item \alert{Exact equality ensures positivity}
         \end{itemize}
-
-        \vfill
-
-        \begin{block}{Definition: Realizability}
-            \vec{u} is realizable if $\exists f > 0$ such that $u = \integral{\vec{m} f}$
-        \end{block}
     \end{frame}
 
     \begin{frame}{Fixed regularization}
