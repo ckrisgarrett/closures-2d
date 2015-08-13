@@ -367,9 +367,5 @@ class MomoptConvergenceTest(ConvergenceTest):
         self.moment_type = moment_type
 
     def run(self, commands, iterations):
-        self.setup_files["momopt.deck"] = util.decks.momopt_deck(
-            moment_type=self.moment_type)
-        return super(MomoptConvergenceTest, self).run(commands,
-            iterations - 1, initial_sample=util.formats.Moment(os.path.join(
-                "tests", "convergence", "moment",
-                "{}.pn".format(2**(iterations - 1)))))
+        self.setup_files["momopt.deck"] = util.decks.momopt_deck(moment_type=self.moment_type)
+        return super(MomoptConvergenceTest, self).run(commands, iterations)
