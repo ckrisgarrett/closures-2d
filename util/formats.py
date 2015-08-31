@@ -107,17 +107,31 @@ class Composite(Grid):
         self.dx = (self.bx - self.ax) / self.sizeX
         self.dy = (self.by - self.ay) / self.sizeY
         self.grid = numpy.zeros([self.sizeX, self.sizeY])
+
+        if parser == Kinetic:
+            self.numQuadPoints = self.subgrids[0,0].numQuadPoints
+            self.quadWeights = self.subgrids[0,0].quadWeights
+            self.matrix = numpy.zeros((self.sizeX, self.sizeY, self.subgrids[0,0].numQuadPoints))
+        elif parser == Moment:
+            self.numMoments = self.subgrids[0,0].numMoments
+            self.matrix = numpy.zeros((self.sizeX, self.sizeY, self.subgrids[0,0].numMoments))
+
         for x in range(numNodesX):
             for y in range(numNodesY):
                 xOffset = sum([self.subgrids[i,0].sizeX for i in range(x)])
                 yOffset = sum([self.subgrids[0,i].sizeY for i in range(y)])
                 self.grid[xOffset:xOffset + self.subgrids[x,y].sizeX,
                     yOffset:yOffset + self.subgrids[x,y].sizeY] = self.subgrids[x,y].grid
+                self.matrix[xOffset:xOffset + self.subgrids[x,y].sizeX,
+                    yOffset:yOffset + self.subgrids[x,y].sizeY] = self.subgrids[x,y].matrix
+
+        self.__class__ = parser
 
 class Kinetic(Grid):
+    header = struct.Struct("=2q4dq")
+
     def __init__(self, filename):
         with open(filename, "rb") as f:
-            header = struct.Struct("=2q4dq")
             data = f.read()
             (self.sizeX,
              self.sizeY,
@@ -125,10 +139,10 @@ class Kinetic(Grid):
              self.ay,
              self.bx,
              self.by,
-             self.numQuadPoints) = header.unpack(data[:header.size])
-            self.quadWeights = numpy.fromstring(data[header.size:header.size +
+             self.numQuadPoints) = self.header.unpack(data[:self.header.size])
+            self.quadWeights = numpy.fromstring(data[self.header.size:self.header.size +
                 8 * self.numQuadPoints], dtype=numpy.double)
-            self.matrix = numpy.fromstring(data[header.size + 8 * self.numQuadPoints:],
+            self.matrix = numpy.fromstring(data[self.header.size + 8 * self.numQuadPoints:],
                 dtype=numpy.double).reshape(self.sizeX, self.sizeY, self.numQuadPoints)
             self.grid = numpy.zeros([self.sizeX, self.sizeY])
             for x in range(self.sizeX):
@@ -138,10 +152,24 @@ class Kinetic(Grid):
             self.dx = (self.bx - self.ax) / self.sizeX
             self.dy = (self.by - self.ay) / self.sizeY
 
+    def output(self, filename):
+        with open(filename, 'wb') as f:
+            f.write(self.header.pack(
+                self.sizeX,
+                self.sizeY,
+                self.ax,
+                self.ay,
+                self.bx,
+                self.by,
+                self.numQuadPoints))
+            self.quadWeights.tofile(f)
+            self.matrix.tofile(f)
+
 class Moment(Grid):
+    header = struct.Struct("=2q4dq")
+
     def __init__(self, filename):
         with open(filename, "rb") as f:
-            header = struct.Struct("=2q4dq")
             data = f.read()
             (self.sizeX,
              self.sizeY,
@@ -149,8 +177,8 @@ class Moment(Grid):
              self.ay,
              self.bx,
              self.by,
-             self.numMoments) = header.unpack(data[:header.size])
-            self.matrix = numpy.fromstring(data[header.size:],
+             self.numMoments) = self.header.unpack(data[:self.header.size])
+            self.matrix = numpy.fromstring(data[self.header.size:],
                 dtype=numpy.double).reshape(self.sizeX, self.sizeY, self.numMoments)
             self.grid = numpy.zeros([self.sizeX, self.sizeY])
             for x in range(self.sizeX):
@@ -159,3 +187,15 @@ class Moment(Grid):
             self.grid /= (2.0 * math.sqrt(math.pi))
             self.dx = (self.bx - self.ax) / self.sizeX
             self.dy = (self.by - self.ay) / self.sizeY
+
+    def output(self, filename):
+        with open(filename, 'wb') as f:
+            f.write(self.header.pack(
+                self.sizeX,
+                self.sizeY,
+                self.ax,
+                self.ay,
+                self.bx,
+                self.by,
+                self.numMoments))
+            self.matrix.tofile(f)

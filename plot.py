@@ -2,12 +2,16 @@
 
 import sys
 import util
+import argparse
 
-filename = sys.argv[1]
+parser = argparse.ArgumentParser(description='Show a plot of the given output file')
+parser.add_argument('filename')
+args = parser.parse_args()
 
-if filename.endswith(".sn"):
-    util.formats.Kinetic(filename).plot()
-elif filename.endswith(".pn"):
-    util.formats.Moment(filename).plot()
+if args.filename.endswith(".sn"):
+    util.formats.Kinetic(args.filename).plot()
+elif args.filename.endswith(".pn"):
+    util.formats.Moment(args.filename).plot()
 else:
     print("Unsupported file")
+    sys.exit(-1)

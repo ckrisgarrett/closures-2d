@@ -2,12 +2,16 @@
 
 import sys
 import util
+import argparse
 
-filename = sys.argv[1]
+parser = argparse.ArgumentParser(description='Show a logarithmic plot of the given output file')
+parser.add_argument('filename')
+args = parser.parse_args()
 
-if filename.endswith(".sn"):
-    util.formats.Kinetic(filename).logplot()
-elif filename.endswith(".pn"):
-    util.formats.Moment(filename).logplot()
+if args.filename.endswith(".sn"):
+    util.formats.Kinetic(args.filename).logplot()
+elif args.filename.endswith(".pn"):
+    util.formats.Moment(args.filename).logplot()
 else:
     print("Unsupported file")
+    sys.exit(-1)
