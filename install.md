@@ -23,6 +23,14 @@ installed locally, a copy is included in the `build/` directory. To use it,
 ensure that Python 2.x is installed and
 replace `scons` in the following build commands with `python build/scons.py`.
 
+Copy the files in the `examples` directory to the root directory.
+This should contain `config.py` and `input.deck`.
+In `config.py`, you will need to supply the appropriate paths for the GSL, 
+BLAS, and Lapack libraries.
+You may also need to change the name of the libraries.
+For instance, if you use openblas, you can get rid of `lapack` in cpu libs
+and replace `blas` with `openblas`.
+
 To build the basic configuration, simply run
 
     scons
